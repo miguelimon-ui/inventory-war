@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory War — Pareto Tracking</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #232733;
+            --border: #2e3345;
+            --text: #e4e6f0;
+            --text-dim: #8b8fa3;
+            --accent: #6c8cff;
+            --red: #ff6b6b;
+            --orange: #ffa94d;
+            --yellow: #ffd43b;
+            --green: #51cf66;
+            --teal: #38d9a9;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* Header */
+        .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .header .subtitle { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
+        .header .date { color: var(--text-dim); font-size: 13px; }
+
+        /* Navigation */
+        .nav { display: flex; gap: 4px; background: var(--surface); padding: 8px 32px; border-bottom: 1px solid var(--border); }
+        .nav-btn { padding: 8px 16px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+        .nav-btn:hover { background: var(--surface2); color: var(--text); }
+        .nav-btn.active { background: var(--accent); color: white; }
+
+        /* Main */
+        .main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+        /* Cards */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+        .card-title { font-size: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+
+        /* KPI Row */
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .kpi-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 32px; font-weight: 700; margin-top: 4px; }
+        .kpi-sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+        .kpi-value.red { color: var(--red); }
+        .kpi-value.green { color: var(--green); }
+        .kpi-value.orange { color: var(--orange); }
+        .kpi-value.accent { color: var(--accent); }
+
+        /* Root Cause Bars */
+        .rc-list { display: flex; flex-direction: column; gap: 12px; }
+        .rc-item { background: var(--surface2); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .rc-item:hover { border-color: var(--accent); }
+        .rc-item.expanded { border-color: var(--accent); }
+        .rc-header { display: flex; justify-content: space-between; align-items: center; }
+        .rc-name { font-weight: 600; font-size: 15px; }
+        .rc-amount { font-weight: 700; font-size: 18px; }
+        .rc-bar-bg { height: 8px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: hidden; }
+        .rc-bar { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+        .rc-meta { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-dim); }
+        .rc-details { margin-top: 16px; display: none; }
+        .rc-item.expanded .rc-details { display: block; }
+
+        /* Actions Table */
+        .actions-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .actions-table th { text-align: left; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+        .actions-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .status-active { background: rgba(81, 207, 102, 0.15); color: var(--green); }
+        .status-pending { background: rgba(255, 212, 59, 0.15); color: var(--yellow); }
+        .status-alert { background: rgba(255, 107, 107, 0.15); color: var(--red); }
+
+        /* Trend Chart */
+        .chart-container { position: relative; height: 280px; margin-top: 12px; }
+        canvas { width: 100% !important; height: 100% !important; }
+
+        /* Pareto Chart */
+        .pareto-bar-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .pareto-bar-row:last-child { border-bottom: none; }
+        .pareto-label { width: 200px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pareto-bar-wrapper { flex: 1; height: 24px; background: var(--border); border-radius: 4px; overflow: hidden; position: relative; }
+        .pareto-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+        .pareto-value { width: 80px; text-align: right; font-weight: 600; font-size: 13px; }
+        .pareto-cumul { width: 60px; text-align: right; font-size: 12px; color: var(--text-dim); }
+
+        /* Picking Section */
+        .picking-card { border-left: 3px solid var(--accent); }
+        .picking-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 16px; }
+        .picking-impact { background: var(--bg); border-radius: 8px; padding: 16px; }
+        .picking-impact-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .picking-impact-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+        /* Summary Table */
+        .summary-table { width: 100%; border-collapse: collapse; }
+        .summary-table th { text-align: left; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+        .summary-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .summary-table tr:hover { background: var(--surface2); }
+        .trend-up { color: var(--red); }
+        .trend-down { color: var(--green); }
+        .trend-stable { color: var(--text-dim); }
+
+        /* Sections */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main { padding: 16px; }
+            .kpi-row { grid-template-columns: 1fr 1fr; }
+            .pareto-label { width: 120px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Inventory War — Pareto Tracking</h1>
+            <div class="subtitle">Wall-to-Wall 2025 Mitigation Progress</div>
+        </div>
+        <div class="date" id="currentDate"></div>
+    </div>
+
+    <div class="nav">
+        <button class="nav-btn active" onclick="showSection('overview')">Executive Summary</button>
+        <button class="nav-btn" onclick="showSection('rootcauses')">Root Causes</button>
+        <button class="nav-btn" onclick="showSection('pareto')">Pareto Detail</button>
+        <button class="nav-btn" onclick="showSection('trends')">Weekly Trends</button>
+        <button class="nav-btn" onclick="showSection('picking')">Picking</button>
+        <button class="nav-btn" onclick="showSection('actions')">All Actions</button>
+    </div>
+
+    <div class="main">
+        <!-- LEVEL 1: Executive Summary -->
+        <div id="overview" class="section active">
+            <div class="kpi-row">
+                <div class="kpi">
+                    <div class="kpi-label">Gap Total Analizado</div>
+                    <div class="kpi-value red">$344K</div>
+                    <div class="kpi-sub">Top 20% SKUs = ~80% del impacto</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Root Causes</div>
+                    <div class="kpi-value accent">6</div>
+                    <div class="kpi-sub">Sistémicos identificados</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Acciones Activas</div>
+                    <div class="kpi-value green">12</div>
+                    <div class="kpi-sub">de 25 totales</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Acciones Pendientes</div>
+                    <div class="kpi-value orange">13</div>
+                    <div class="kpi-sub">por implementar</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Insight Central</div>
+                <p style="font-size: 18px; line-height: 1.6; max-width: 700px;">
+                    El problema <strong style="color: var(--red);">no es inventario</strong>. Es <strong style="color: var(--accent);">control de flujo</strong>.
+                    Las discrepancias son síntoma de fallas en el sistema operativo — el flujo físico no coincide con el flujo en el sistema.
+                </p>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Breakdown por Root Cause</div>
+                <div id="overviewBars"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Alertas de la Semana</div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); border-radius: 8px; padding: 16px;">
+                        <strong style="color: var(--red);">TRUFIG EMPEORANDO</strong>
+                        <span style="color: var(--text-dim); font-size: 13px;"> — Short PIDs subieron de 27 a 47 en 6 semanas. Process Breakdown no se está conteniendo.</span>
+                    </div>
+                    <div style="background: rgba(255,169,77,0.1); border: 1px solid rgba(255,169,77,0.3); border-radius: 8px; padding: 16px;">
+                        <strong style="color: var(--orange);">TRANSFER NEEDED SUBIENDO</strong>
+                        <span style="color: var(--text-dim); font-size: 13px;"> — De 0 a 6 líneas. Material Flow Issues creciendo silenciosamente.</span>
+                    </div>
+                    <div style="background: rgba(81,207,102,0.1); border: 1px solid rgba(81,207,102,0.3); border-radius: 8px; padding: 16px;">
+                        <strong style="color: var(--green);">ADJ REQUESTED CONTROLADO</strong>
+                        <span style="color: var(--text-dim); font-size: 13px;"> — Bajó de 20 a 1. Verification Gap está respondiendo al cycle count program.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEVEL 2: Root Causes -->
+        <div id="rootcauses" class="section">
+            <div class="card">
+                <div class="card-title">Root Causes Sistémicos — $344K Total</div>
+                <div class="rc-list" id="rcList"></div>
+            </div>
+        </div>
+
+        <!-- Pareto Detail -->
+        <div id="pareto" class="section">
+            <div class="card">
+                <div class="card-title">Pareto — Top SKUs por Impacto ($)</div>
+                <div id="paretoChart"></div>
+            </div>
+        </div>
+
+        <!-- Trends -->
+        <div id="trends" class="section">
+            <div class="card">
+                <div class="card-title">Short PID — Weekly Trend by Reason</div>
+                <div class="chart-container">
+                    <canvas id="shortPidChart"></canvas>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-title">Cycle Count — Pareto by Root Cause (Wks 1–8)</div>
+                <div class="chart-container">
+                    <canvas id="cycleCountChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Picking -->
+        <div id="picking" class="section">
+            <div class="card picking-card">
+                <div class="card-title">Picking — Punto de Control Crítico</div>
+                <p style="color: var(--text-dim); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+                    El picking (Ready for Picking → Picking in Process → Ready for Assembly) es donde más se rompe la cadena entre flujo físico y sistema.
+                    Una acción transversal aquí ataca <strong style="color: var(--accent);">4 de 6 root causes</strong> simultáneamente.
+                </p>
+                <div class="picking-grid">
+                    <div class="picking-impact">
+                        <div class="picking-impact-title" style="color: var(--red);">Process Breakdown — $108K</div>
+                        <div class="picking-impact-desc">Material se consume en picking pero PID no se completa. PS sigue mostrando FG fantasma.</div>
+                        <div style="margin-top: 8px; font-size: 12px; color: var(--accent);">→ Validación de PID al pullear</div>
+                    </div>
+                    <div class="picking-impact">
+                        <div class="picking-impact-title" style="color: var(--orange);">Verification Gap — $85K</div>
+                        <div class="picking-impact-desc">Picking sin validación genera ajustes manuales incorrectos después.</div>
+                        <div style="margin-top: 8px; font-size: 12px; color: var(--accent);">→ Doble confirmación cantidad/SKU</div>
+                    </div>
+                    <div class="picking-impact">
+                        <div class="picking-impact-title" style="color: var(--yellow);">Identification Failure — $44K</div>
+                        <div class="picking-impact-desc">Se pullea SKU incorrecto por falta de etiqueta o barcode.</div>
+                        <div style="margin-top: 8px; font-size: 12px; color: var(--accent);">→ Escaneo/barcode en punto de picking</div>
+                    </div>
+                    <div class="picking-impact">
+                        <div class="picking-impact-title" style="color: var(--teal);">Material Flow — $33K</div>
+                        <div class="picking-impact-desc">Material pulleado sin registrar. WIP flota sin ownership.</div>
+                        <div style="margin-top: 8px; font-size: 12px; color: var(--accent);">→ Registro automático al pullear</div>
+                    </div>
+                </div>
+                <div style="margin-top: 24px; background: var(--bg); border-radius: 8px; padding: 20px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-dim);">Impacto potencial de digitalizar picking</div>
+                    <div style="font-size: 36px; font-weight: 700; color: var(--accent); margin-top: 4px;">$270K</div>
+                    <div style="font-size: 13px; color: var(--text-dim);">78% del gap total ($344K)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Actions -->
+        <div id="actions" class="section">
+            <div class="card">
+                <div class="card-title">Todas las Acciones — Status Board</div>
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <button class="nav-btn active" onclick="filterActions('all', this)">Todas (25)</button>
+                    <button class="nav-btn" onclick="filterActions('active', this)">Activas (12)</button>
+                    <button class="nav-btn" onclick="filterActions('pending', this)">Pendientes (13)</button>
+                    <button class="nav-btn" onclick="filterActions('alert', this)">Alertas (2)</button>
+                </div>
+                <table class="actions-table" id="actionsTable">
+                    <thead>
+                        <tr>
+                            <th>Root Cause</th>
+                            <th>Acción</th>
+                            <th>Status</th>
+                            <th>Monitoreo</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody id="actionsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+    // ===== DATA =====
+    const rootCauses = [
+        {
+            name: "Process Breakdown",
+            amount: 108000,
+            color: "#ff6b6b",
+            description: "PIDs no se completan. El flujo físico no tiene pasos definidos para registrar en sistema.",
+            items: "60051 (QX806BE), 60546 (SA63-7-ENC-STD), 60069 (SA63-7-ENC), 60423 (QX1020)",
+            w2w: "PIDs with FG — $47K + $33K + $15K + $6.4K + $6.2K",
+            monitoring: "Short PID Pareto (Trufig, PID Requested)",
+            actions: [
+                { action: "Short PID tracking — Trufig", status: "alert", monitoring: "Trend chart semanal", trend: "27→47 ↑" },
+                { action: "Short PID tracking — PID Requested", status: "active", monitoring: "Trend chart semanal", trend: "13→1 ↓" },
+                { action: "Definir flujo PID Trufig (migrar a normal)", status: "active", monitoring: "Board PeopleSoft Workflow", trend: "En proceso" },
+                { action: "Validar PIDs completados vs FG físico", status: "pending", monitoring: "—", trend: "—" }
+            ]
+        },
+        {
+            name: "Verification Gap",
+            amount: 85000,
+            color: "#ffa94d",
+            description: "Ajustes manuales sin doble validación. Se confía en memoria, sin checkpoints obligatorios.",
+            items: "60398 (SA8.5-GRILLE-R-SR), CAB.AL.SA54-4, 60397, 60423, 60395",
+            w2w: "Wrong Adjustment — $36K + $17K + $11K + $7.7K + $7.4K + $6.7K",
+            monitoring: "Cycle Count Pareto (Adj Requested)",
+            actions: [
+                { action: "Short PID tracking — Adj Requested", status: "active", monitoring: "Trend chart semanal", trend: "20→1 ↓" },
+                { action: "Cycle count program (doble validación)", status: "active", monitoring: "Cycle Count Pareto", trend: "18 instancias / 8 wks" },
+                { action: "Proceso de aprobación para ajustes manuales", status: "pending", monitoring: "—", trend: "—" },
+                { action: "SOP para ajustes en PeopleSoft", status: "pending", monitoring: "—", trend: "—" }
+            ]
+        },
+        {
+            name: "System Misalignment",
+            amount: 45000,
+            color: "#845ef7",
+            description: "PeopleSoft y Monday no reflejan la misma realidad. Procesos de PS generan errores.",
+            items: "GRILL.AL.CUSTOM, transfers varios",
+            w2w: "Process Issue $24K + Transfer incorrecta $13K + Error 2025 $8K",
+            monitoring: "Cycle Count Pareto (PS Error, Transfer Missed)",
+            actions: [
+                { action: "Cycle count — PeopleSoft Error", status: "active", monitoring: "Cycle Count Pareto", trend: "4 instancias" },
+                { action: "Cycle count — Transfer Missed", status: "active", monitoring: "Cycle Count Pareto", trend: "4 instancias" },
+                { action: "Short PID tracking — Incorrect BOM", status: "active", monitoring: "Trend chart semanal", trend: "0→5→1 ~" },
+                { action: "Revisar proceso cancelación órdenes en PS", status: "pending", monitoring: "—", trend: "—" },
+                { action: "Sincronización Monday ↔ PS tiempo real", status: "pending", monitoring: "—", trend: "—" }
+            ]
+        },
+        {
+            name: "Identification Failure",
+            amount: 44000,
+            color: "#ffd43b",
+            description: "Tags incorrectos, grilles contados como FG, nomenclatura confusa, sin barcode/scanning.",
+            items: "DRV.10.002.2, 60059 (QXC820S), SCREW ADJUSTMENT S3",
+            w2w: "Control Point $20K + Grilles as FG $9K + Tags $16K",
+            monitoring: "Cycle Count Pareto (Labeling & Nomenclature)",
+            actions: [
+                { action: "Cycle count — Labeling & Nomenclature", status: "active", monitoring: "Cycle Count Pareto", trend: "4 instancias" },
+                { action: "Short PID tracking — Count Requested", status: "active", monitoring: "Trend chart semanal", trend: "26→4 ↓" },
+                { action: "Estandarizar etiquetado grilles vs FG", status: "pending", monitoring: "—", trend: "—" },
+                { action: "Evaluar barcode/scanning en puntos críticos", status: "pending", monitoring: "—", trend: "—" }
+            ]
+        },
+        {
+            name: "Material Flow Issues",
+            amount: 33000,
+            color: "#38d9a9",
+            description: "Material movido sin tracking. WIP flotando sin ownership.",
+            items: "CAB.SA853-6-ENC, CAB.AL.SAS42-4, MISC.MAGNET.CUP",
+            w2w: "SKU transfers $28K + WIP grilles kitted $9K",
+            monitoring: "Short PID Pareto (WIP Error, Transfer Needed)",
+            actions: [
+                { action: "Short PID tracking — WIP Error", status: "alert", monitoring: "Trend chart semanal", trend: "15→49→35 ~" },
+                { action: "Short PID tracking — Transfer Needed", status: "active", monitoring: "Trend chart semanal", trend: "0→6 ↑" },
+                { action: "Identificar WIP flotante sin ownership", status: "pending", monitoring: "—", trend: "—" },
+                { action: "Proceso de transferencia al migrar SKU", status: "pending", monitoring: "—", trend: "—" }
+            ]
+        },
+        {
+            name: "Training / Standardization",
+            amount: 29000,
+            color: "#74c0fc",
+            description: "Conocimiento tribal. Sin SOP formal. Ejecución inconsistente.",
+            items: "OT88 Housing, Scrap items",
+            w2w: "OT88 $9.4K + Scrap Process $7.8K + Short PIDs $6.5K",
+            monitoring: "Cycle Count Pareto (BOM Review Requested)",
+            actions: [
+                { action: "Cycle count — BOM Review Requested", status: "active", monitoring: "Cycle Count Pareto", trend: "3 instancias" },
+                { action: "Documentar proceso receiving (OT88 case)", status: "pending", monitoring: "—", trend: "—" },
+                { action: "SOP de scrap process", status: "pending", monitoring: "—", trend: "—" },
+                { action: "Capacitación operadores puntos de control", status: "pending", monitoring: "—", trend: "—" }
+            ]
+        }
+    ];
+
+    const paretoItems = [
+        { sku: "60051", desc: "QX806BE", ps: 46973, actual: 3850, dif: 43123 },
+        { sku: "60383", desc: "AMP.100X2.PCB", ps: 0, actual: 40696, dif: -40696 },
+        { sku: "60398", desc: "SA8.5-GRILLE-R-SR", ps: 39878, actual: 3775, dif: 36103 },
+        { sku: "60546", desc: "SA63-7-ENC-STD", ps: 33558, actual: 780, dif: 32777 },
+        { sku: "66058", desc: "VXQ88R-STD", ps: 88010, actual: 120510, dif: -32500 },
+        { sku: "GRILL.AL.CUSTOM", desc: "CUSTOM GRILLE", ps: 23789, actual: 115, dif: 23675 },
+        { sku: "DRV.10.002.2", desc: "WOOFER 10IN SLIM", ps: 108859, actual: 88541, dif: 20319 },
+        { sku: "CAB.SA853-6-ENC", desc: "CAB.SA853-6-ENC", ps: 19355, actual: 0, dif: 19355 },
+        { sku: "CAB.AL.SA54-4", desc: "QUAD 5.25IN SUB", ps: 40300, actual: 23660, dif: 16640 },
+        { sku: "DRV.1.002", desc: "1IN TWEETER BE", ps: 87142, actual: 103606, dif: -16464 },
+        { sku: "60069", desc: "SA63-7-ENC", ps: 21331, actual: 5983, dif: 15348 },
+        { sku: "SPL5-DVBK", desc: "SPL5 DIVIDER BLOCK", ps: 10062, actual: 24405, dif: -14343 },
+        { sku: "60610", desc: "SA68 SPACESAVER", ps: 15531, actual: 29609, dif: -14078 },
+        { sku: "SPL6-DVBK", desc: "SPL6 DIVIDER BLOCK", ps: 7080, actual: 19425, dif: -12345 },
+        { sku: "NET.SA63-4", desc: "NETWORK 63SA-4", ps: 15656, actual: 27352, dif: -11696 },
+        { sku: "CAB.AL.SAS63-4", desc: "63SA-4 ENCLOSURE", ps: 89544, actual: 100860, dif: -11316 },
+        { sku: "OW64-EC", desc: "OW64-EC", ps: 4620, actual: 15585, dif: -10965 },
+        { sku: "60397", desc: "SA8.5-GRILLE-R-RF", ps: 18778, actual: 8034, dif: 10744 },
+        { sku: "CAB.AL.AT85QTIBAIM", desc: "AT85TI-BA-IM", ps: 9360, actual: 0, dif: 9360 },
+        { sku: "60059", desc: "QXC820S", ps: 9576, actual: 299, dif: 9277 },
+        { sku: "60594", desc: "SA68-7-ENC", ps: 154279, actual: 145037, dif: 9241 },
+        { sku: "CAB.AL.SAS42-4", desc: "42SAS-4 CABINET", ps: 43736, actual: 34760, dif: 8976 },
+        { sku: "MISC.MAGNET.CUP", desc: "MAGNET GRILLE CUPS", ps: 27989, actual: 19112, dif: 8877 },
+        { sku: "60035", desc: "PP15-M", ps: 8105, actual: 0, dif: 8105 }
+    ];
+
+    const trendWeeks = ["02.09", "02.16", "02.23", "03.02", "03.09", "03.16"];
+    const trendData = {
+        "Trufig":           [27, 28, 31, 33, 34, 47],
+        "WIP Error":        [15, 25, 37, 49, 30, 35],
+        "Count Requested":  [26,  1,  9,  3,  4,  4],
+        "Adj Requested":    [10, 20,  1,  1,  1,  1],
+        "PID Requested":    [13,  1,  3,  6,  1,  1],
+        "Transfer Needed":  [ 0,  1,  1,  2,  3,  6],
+        "Incorrect BOM":    [ 0,  3,  1,  3,  5,  1]
+    };
+    const trendColors = {
+        "Trufig": "#ff6b6b", "WIP Error": "#38d9a9", "Count Requested": "#ffd43b",
+        "Adj Requested": "#ffa94d", "PID Requested": "#845ef7", "Transfer Needed": "#74c0fc",
+        "Incorrect BOM": "#f783ac"
+    };
+
+    const cycleCountData = [
+        { cause: "Labeling & Nomenclature", count: 4, pct: 22.2 },
+        { cause: "Transfer Missed", count: 4, pct: 22.2 },
+        { cause: "PeopleSoft Error", count: 4, pct: 22.2 },
+        { cause: "BOM Review Requested", count: 3, pct: 16.7 },
+        { cause: "Immaterial", count: 3, pct: 16.7 }
+    ];
+
+    // ===== RENDER =====
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Overview bars
+    const totalAmount = rootCauses.reduce((s, rc) => s + rc.amount, 0);
+    document.getElementById('overviewBars').innerHTML = rootCauses.map(rc => {
+        const pct = (rc.amount / totalAmount * 100).toFixed(1);
+        return `<div class="pareto-bar-row">
+            <div class="pareto-label" style="color: ${rc.color}">${rc.name}</div>
+            <div class="pareto-bar-wrapper"><div class="pareto-bar-fill" style="width: ${pct}%; background: ${rc.color}"></div></div>
+            <div class="pareto-value">$${(rc.amount/1000).toFixed(0)}K</div>
+            <div class="pareto-cumul">${pct}%</div>
+        </div>`;
+    }).join('');
+
+    // Root causes detail
+    document.getElementById('rcList').innerHTML = rootCauses.map((rc, idx) => {
+        const pct = (rc.amount / totalAmount * 100).toFixed(1);
+        const actionsHtml = rc.actions.map(a => `<tr class="action-row" data-status="${a.status}">
+            <td>${a.action}</td>
+            <td><span class="status-badge status-${a.status}">${a.status === 'alert' ? 'ALERTA' : a.status === 'active' ? 'ACTIVO' : 'PENDIENTE'}</span></td>
+            <td>${a.monitoring}</td>
+            <td class="${a.trend.includes('↑') ? 'trend-up' : a.trend.includes('↓') ? 'trend-down' : 'trend-stable'}">${a.trend}</td>
+        </tr>`).join('');
+
+        return `<div class="rc-item" onclick="this.classList.toggle('expanded')">
+            <div class="rc-header">
+                <div>
+                    <div class="rc-name" style="color: ${rc.color}">${rc.name}</div>
+                    <div class="rc-meta">
+                        <span>${rc.monitoring}</span>
+                    </div>
+                </div>
+                <div class="rc-amount" style="color: ${rc.color}">$${(rc.amount/1000).toFixed(0)}K</div>
+            </div>
+            <div class="rc-bar-bg"><div class="rc-bar" style="width: ${pct}%; background: ${rc.color}"></div></div>
+            <div class="rc-details">
+                <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 8px;">${rc.description}</p>
+                <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 4px;"><strong>W2W:</strong> ${rc.w2w}</p>
+                <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;"><strong>Items:</strong> ${rc.items}</p>
+                <table class="actions-table">
+                    <thead><tr><th>Acción</th><th>Status</th><th>Monitoreo</th><th>Trend</th></tr></thead>
+                    <tbody>${actionsHtml}</tbody>
+                </table>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Pareto chart
+    const maxDif = Math.max(...paretoItems.map(p => Math.abs(p.dif)));
+    let cumulDif = 0;
+    const totalDif = paretoItems.reduce((s, p) => s + Math.abs(p.dif), 0);
+    document.getElementById('paretoChart').innerHTML = paretoItems.map(p => {
+        cumulDif += Math.abs(p.dif);
+        const pct = (Math.abs(p.dif) / maxDif * 100).toFixed(1);
+        const cumulPct = (cumulDif / totalDif * 100).toFixed(1);
+        const color = p.dif > 0 ? 'var(--red)' : 'var(--teal)';
+        const label = p.dif > 0 ? 'PS > Real (fantasma)' : 'Real > PS (no registrado)';
+        return `<div class="pareto-bar-row" title="${p.desc} — ${label}">
+            <div class="pareto-label"><strong>${p.sku}</strong> <span style="color: var(--text-dim); font-size: 11px;">${p.desc}</span></div>
+            <div class="pareto-bar-wrapper"><div class="pareto-bar-fill" style="width: ${pct}%; background: ${color}"></div></div>
+            <div class="pareto-value" style="color: ${color}">${p.dif > 0 ? '+' : ''}$${(p.dif/1000).toFixed(1)}K</div>
+            <div class="pareto-cumul">${cumulPct}%</div>
+        </div>`;
+    }).join('') + `<div style="margin-top: 12px; display: flex; gap: 20px; font-size: 12px; color: var(--text-dim);">
+        <span><span style="display:inline-block;width:12px;height:12px;background:var(--red);border-radius:2px;margin-right:4px;vertical-align:middle;"></span> PS > Real (inventario fantasma)</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:var(--teal);border-radius:2px;margin-right:4px;vertical-align:middle;"></span> Real > PS (no registrado en sistema)</span>
+    </div>`;
+
+    // All actions table
+    function renderActions() {
+        const rows = [];
+        rootCauses.forEach(rc => {
+            rc.actions.forEach(a => {
+                rows.push(`<tr class="action-row" data-status="${a.status}" data-rc="${rc.name}">
+                    <td style="color: ${rc.color}; font-weight: 500;">${rc.name}</td>
+                    <td>${a.action}</td>
+                    <td><span class="status-badge status-${a.status}">${a.status === 'alert' ? 'ALERTA' : a.status === 'active' ? 'ACTIVO' : 'PENDIENTE'}</span></td>
+                    <td>${a.monitoring}</td>
+                    <td class="${a.trend.includes('↑') ? 'trend-up' : a.trend.includes('↓') ? 'trend-down' : 'trend-stable'}">${a.trend}</td>
+                </tr>`);
+            });
+        });
+        document.getElementById('actionsBody').innerHTML = rows.join('');
+    }
+    renderActions();
+
+    // ===== CHARTS =====
+    function initCharts() {
+        // Short PID Trend
+        new Chart(document.getElementById('shortPidChart'), {
+            type: 'line',
+            data: {
+                labels: trendWeeks,
+                datasets: Object.entries(trendData).map(([name, data]) => ({
+                    label: name,
+                    data: data,
+                    borderColor: trendColors[name],
+                    backgroundColor: trendColors[name] + '20',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: false
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#8b8fa3', usePointStyle: true, padding: 16, font: { size: 11 } } }
+                },
+                scales: {
+                    x: { grid: { color: '#2e3345' }, ticks: { color: '#8b8fa3' } },
+                    y: { grid: { color: '#2e3345' }, ticks: { color: '#8b8fa3' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // Cycle Count Pareto
+        new Chart(document.getElementById('cycleCountChart'), {
+            type: 'bar',
+            data: {
+                labels: cycleCountData.map(d => d.cause),
+                datasets: [{
+                    label: 'Occurrences',
+                    data: cycleCountData.map(d => d.count),
+                    backgroundColor: ['#ff6b6b', '#ffa94d', '#845ef7', '#ffd43b', '#74c0fc'],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#8b8fa3', font: { size: 11 } } },
+                    y: { grid: { color: '#2e3345' }, ticks: { color: '#8b8fa3', stepSize: 1 }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // ===== NAVIGATION =====
+    function showSection(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.target.classList.add('active');
+        if (id === 'trends') setTimeout(initCharts, 50);
+    }
+
+    function filterActions(filter, btn) {
+        document.querySelectorAll('#actions .nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('#actionsTable .action-row').forEach(row => {
+            if (filter === 'all') row.style.display = '';
+            else if (filter === 'alert') row.style.display = row.dataset.status === 'alert' ? '' : 'none';
+            else if (filter === 'active') row.style.display = (row.dataset.status === 'active' || row.dataset.status === 'alert') ? '' : 'none';
+            else row.style.display = row.dataset.status === 'pending' ? '' : 'none';
+        });
+    }
+    </script>
+</body>
+</html>
