@@ -203,6 +203,26 @@
         .picking-impact-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
         .picking-impact-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
 
+        /* Gantt Chart */
+        .gantt { margin-top: 24px; overflow-x: auto; }
+        .gantt-header { display: flex; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px; }
+        .gantt-label-col { width: 280px; min-width: 280px; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; padding: 0 12px; }
+        .gantt-timeline-col { flex: 1; display: flex; min-width: 500px; }
+        .gantt-week { flex: 1; text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.05em; }
+        .gantt-row { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); min-height: 40px; }
+        .gantt-row:last-child { border-bottom: none; }
+        .gantt-row-label { width: 280px; min-width: 280px; padding: 0 12px; font-size: 12px; font-weight: 400; display: flex; align-items: center; gap: 8px; }
+        .gantt-row-label .dep-tag { font-size: 9px; color: var(--text-muted); background: var(--border); padding: 2px 6px; border-radius: 3px; font-weight: 500; letter-spacing: 0.03em; }
+        .gantt-row-bars { flex: 1; position: relative; height: 24px; min-width: 500px; }
+        .gantt-bar { position: absolute; height: 20px; border-radius: 3px; top: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; letter-spacing: 0.03em; transition: all 0.3s; cursor: default; }
+        .gantt-bar:hover { opacity: 0.85; transform: scaleY(1.15); }
+        .gantt-milestone { position: absolute; width: 12px; height: 12px; transform: rotate(45deg); top: 6px; margin-left: -6px; border: 2px solid; background: var(--surface); }
+        .gantt-dep-line { position: absolute; border-left: 1px dashed var(--text-muted); opacity: 0.3; }
+        .gantt-phase-label { font-size: 11px; font-weight: 600; color: var(--beam); text-transform: uppercase; letter-spacing: 0.08em; padding: 12px 12px 4px; }
+        .gantt-legend { display: flex; gap: 20px; margin-top: 16px; font-size: 11px; color: var(--text-muted); font-weight: 500; }
+        .gantt-legend-item { display: flex; align-items: center; gap: 6px; }
+        .gantt-legend-dot { width: 12px; height: 8px; border-radius: 2px; }
+
         /* Summary Table */
         .summary-table { width: 100%; border-collapse: collapse; }
         .summary-table th {
@@ -404,6 +424,22 @@
                     <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">Potential Impact of Digitizing Picking</div>
                     <div style="font-size: 40px; font-weight: 300; color: var(--beam); margin-top: 8px; letter-spacing: -0.02em;">$270K</div>
                     <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">78% of total gap ($344K)</div>
+                </div>
+            </div>
+
+            <!-- Picking Gantt -->
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-title">Implementation Roadmap</div>
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">
+                    Phased rollout with dependencies. Each phase unlocks the next level of root cause mitigation.
+                </p>
+                <div class="gantt" id="pickingGantt"></div>
+                <div class="gantt-legend">
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: var(--beam);"></div> Infrastructure</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00B2A9;"></div> Process Design</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #7E57C2;"></div> Development</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #FFA726;"></div> Training & Rollout</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #4CAF50;"></div> Validation</div>
                 </div>
             </div>
         </div>
@@ -742,6 +778,91 @@
             else row.style.display = row.dataset.status === 'pending' ? '' : 'none';
         });
     }
+
+    // ===== PICKING GANTT =====
+    const ganttWeeks = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
+    const totalWeeks = ganttWeeks.length;
+
+    // Phases & tasks with dependencies
+    // start/end are 0-indexed week numbers, deps are task ids
+    const ganttTasks = [
+        // Phase 1: Assessment & Foundation
+        { id: 'p1', phase: 'Phase 1 — Assessment & Foundation', isPhase: true },
+        { id: 'a1', name: 'Map current picking flow', start: 0, end: 1, color: '#00B2A9', cat: 'process', deps: [], addresses: '' },
+        { id: 'a2', name: 'Identify gap points (where tracking breaks)', start: 0, end: 1, color: '#00B2A9', cat: 'process', deps: [], addresses: '' },
+        { id: 'a3', name: 'Define target state & success metrics', start: 1, end: 2, color: '#00B2A9', cat: 'process', deps: ['a1','a2'], addresses: '' },
+        { id: 'a4', name: 'Evaluate scanner/hardware options', start: 1, end: 2, color: 'var(--beam)', cat: 'infra', deps: ['a1'], addresses: '' },
+
+        // Phase 2: Infrastructure
+        { id: 'p2', phase: 'Phase 2 — Infrastructure Setup', isPhase: true },
+        { id: 'b1', name: 'Procure barcode scanners', start: 2, end: 4, color: 'var(--beam)', cat: 'infra', deps: ['a4'], addresses: 'Identification Failure' },
+        { id: 'b2', name: 'Label all pick locations (bins/shelves)', start: 2, end: 4, color: 'var(--beam)', cat: 'infra', deps: ['a3'], addresses: 'Identification Failure' },
+        { id: 'b3', name: 'Verify/print SKU barcodes on all items', start: 3, end: 5, color: 'var(--beam)', cat: 'infra', deps: ['b1'], addresses: 'Identification Failure' },
+        { id: 'b4', name: 'Set up scanning app / integration layer', start: 3, end: 5, color: '#7E57C2', cat: 'dev', deps: ['b1','a3'], addresses: 'Material Flow' },
+
+        // Phase 3: Core Features
+        { id: 'p3', phase: 'Phase 3 — Core Features', isPhase: true },
+        { id: 'c1', name: 'Barcode scan at pick point', start: 5, end: 7, color: '#7E57C2', cat: 'dev', deps: ['b3','b4'], addresses: 'Identification Failure — $44K' },
+        { id: 'c2', name: 'Auto-register material on pull', start: 5, end: 7, color: '#7E57C2', cat: 'dev', deps: ['b4'], addresses: 'Material Flow — $33K' },
+        { id: 'c3', name: 'PID validation at pull time', start: 6, end: 8, color: '#7E57C2', cat: 'dev', deps: ['c1'], addresses: 'Process Breakdown — $108K' },
+        { id: 'c4', name: 'Dual confirmation (qty + SKU)', start: 7, end: 8, color: '#7E57C2', cat: 'dev', deps: ['c1','c2'], addresses: 'Verification Gap — $85K' },
+
+        // Phase 4: Training & Pilot
+        { id: 'p4', phase: 'Phase 4 — Training & Rollout', isPhase: true },
+        { id: 'd1', name: 'Write SOPs for new picking process', start: 7, end: 8, color: '#FFA726', cat: 'training', deps: ['c1','c2'], addresses: 'Training/Standardization' },
+        { id: 'd2', name: 'Train operators (Bldg 2220 team)', start: 8, end: 9, color: '#FFA726', cat: 'training', deps: ['d1','c3','c4'], addresses: 'Training/Standardization' },
+        { id: 'd3', name: 'Pilot with top 5 high-impact SKUs', start: 9, end: 10, color: '#FFA726', cat: 'training', deps: ['d2'], addresses: 'All root causes' },
+
+        // Phase 5: Validation
+        { id: 'p5', phase: 'Phase 5 — Validation & Full Rollout', isPhase: true },
+        { id: 'e1', name: 'Measure pilot: compare variance vs baseline', start: 10, end: 11, color: '#4CAF50', cat: 'validation', deps: ['d3'], addresses: '$270K target' },
+        { id: 'e2', name: 'Adjust & fix issues from pilot', start: 10, end: 11, color: '#4CAF50', cat: 'validation', deps: ['d3'], addresses: '' },
+        { id: 'e3', name: 'Full rollout to all SKUs', start: 11, end: 12, color: '#4CAF50', cat: 'validation', deps: ['e1','e2'], addresses: 'All root causes — $270K' },
+    ];
+
+    function renderGantt() {
+        const container = document.getElementById('pickingGantt');
+        let html = '';
+
+        // Header
+        html += '<div class="gantt-header">';
+        html += '<div class="gantt-label-col">Task</div>';
+        html += '<div class="gantt-timeline-col">';
+        ganttWeeks.forEach(w => { html += `<div class="gantt-week">${w}</div>`; });
+        html += '</div></div>';
+
+        // Rows
+        ganttTasks.forEach(task => {
+            if (task.isPhase) {
+                html += `<div class="gantt-phase-label">${task.phase}</div>`;
+                return;
+            }
+            const leftPct = (task.start / totalWeeks * 100).toFixed(2);
+            const widthPct = ((task.end - task.start) / totalWeeks * 100).toFixed(2);
+            const depTags = task.deps.length > 0
+                ? `<span class="dep-tag">after ${task.deps.join(', ')}</span>`
+                : '';
+            const addressTag = task.addresses
+                ? `<span style="font-size:9px;color:var(--beam);background:rgba(0,163,225,0.1);padding:2px 6px;border-radius:3px;font-weight:500;">${task.addresses}</span>`
+                : '';
+
+            html += `<div class="gantt-row">
+                <div class="gantt-row-label">
+                    <span style="color:var(--text-muted);font-size:10px;font-weight:600;width:20px;">${task.id}</span>
+                    <span>${task.name}</span>
+                    ${addressTag}
+                </div>
+                <div class="gantt-row-bars">
+                    <div class="gantt-bar" style="left:${leftPct}%;width:${widthPct}%;background:${task.color};" title="${task.name} (${ganttWeeks[task.start]}–${ganttWeeks[task.end-1]})${task.addresses ? '\n→ ' + task.addresses : ''}">
+                        ${ganttWeeks[task.start]}–${ganttWeeks[task.end-1]}
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+    }
+    renderGantt();
     </script>
 </body>
 </html>
