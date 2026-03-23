@@ -41,7 +41,3 @@ export default async (req, context) => {
 
   return new Response(JSON.stringify({ error: "bad request" }), { status: 400, headers });
 };
-
-export const config = {
-  path: "/api/data",
-};
