@@ -1,0 +1,242 @@
+[
+  {
+    "item_id": "60051",
+    "description": "QX806BE",
+    "findings": "PIDs with FG",
+    "pct_adjusted": 13.6,
+    "value": 61065,
+    "main_code": "Process",
+    "secondary_code": "PID and FG flow mismanagement due to unclear ownership and product type distinction",
+    "adjusted_to_main": 0.3006878473683621
+  },
+  {
+    "item_id": "60398",
+    "description": "SA8.5-GRILLE-R-SR",
+    "findings": "Wrong Adjustment",
+    "pct_adjusted": 10.5,
+    "value": 46934,
+    "main_code": "Data",
+    "secondary_code": "Incorrect SKU selection during cycle count due to description-based identification",
+    "adjusted_to_main": 0.28888445246024413
+  },
+  {
+    "item_id": "60546",
+    "description": "SA63-7-ENC-STD",
+    "findings": "PIDs with FG",
+    "pct_adjusted": 9.5,
+    "value": 42611,
+    "main_code": "Process",
+    "secondary_code": "PID and FG flow mismanagement due to unclear ownership and product type distinction",
+    "adjusted_to_main": 0.20981620382891356
+  },
+  {
+    "item_id": "GRILL.AL.CUSTOM",
+    "description": "CUSTOM MADE GRILLE",
+    "findings": "Process Issue",
+    "pct_adjusted": 6.9,
+    "value": 30777,
+    "main_code": "Process",
+    "secondary_code": "Known inventory issues without defined corrective action plan",
+    "adjusted_to_main": 0.1515482887032168
+  },
+  {
+    "item_id": "DRV.10.002.2",
+    "description": "WOOFER 10IN SLIM LINE 3IN DEPT",
+    "findings": "Control Point Performed Incorrectly",
+    "pct_adjusted": 5.9,
+    "value": 26414,
+    "main_code": "Transactions",
+    "secondary_code": "Established adjustment process not followed during cycle count",
+    "adjusted_to_main": 0.40296796758505793
+  },
+  {
+    "item_id": "CAB.SA853-6-ENC",
+    "description": "CAB.SA853-6-ENC",
+    "findings": "Not adjusted after the new product (not transfer to the new SKU, but the product phisical was use for the new SKU)",
+    "pct_adjusted": 5.6,
+    "value": 25162,
+    "main_code": "Data",
+    "secondary_code": "Stock not migrated to new SKU or revision",
+    "adjusted_to_main": 0.1548704785101708
+  },
+  {
+    "item_id": "CAB.AL.SA54-4",
+    "description": "CUSTOM QUAD 5.25IN SUBWOOFER",
+    "findings": "Wrong Adjustment",
+    "pct_adjusted": 4.8,
+    "value": 21632,
+    "main_code": "Transactions",
+    "secondary_code": "Established adjustment process not followed during cycle count",
+    "adjusted_to_main": 0.34
+  },
+  {
+    "item_id": "60069",
+    "description": "SA63-7-ENC",
+    "findings": "PIDs with FG",
+    "pct_adjusted": 4.5,
+    "value": 19953,
+    "main_code": "Process",
+    "secondary_code": "PID and FG flow mismanagement due to unclear ownership and product type distinction",
+    "adjusted_to_main": 0.09824723905664635
+  },
+  {
+    "item_id": "60397",
+    "description": "SA8.5-GRILLE-R-RF",
+    "findings": "Wrong Adjustment",
+    "pct_adjusted": 3.1,
+    "value": 13967,
+    "main_code": "Data",
+    "secondary_code": "Incorrect SKU selection during cycle count due to description-based identification",
+    "adjusted_to_main": 0.08596827855722007
+  },
+  {
+    "item_id": "CAB.AL.AT85QTIBAIM",
+    "description": "AT85TI-BA-IM INTERNAL MOUNT VE",
+    "findings": "ALL OT88 Housing are received External mount by default - Internal mounts are sold as accessories, currenly none are assembled together",
+    "pct_adjusted": 2.7,
+    "value": 12168,
+    "main_code": "Data",
+    "secondary_code": "Incorrect SKU selection during cycle count due to description-based identification",
+    "adjusted_to_main": 0.07489473928469122
+  },
+  {
+    "item_id": "60059",
+    "description": "QXC820S",
+    "findings": "These were counted as FGs when in reality they are only grilles",
+    "pct_adjusted": 2.7,
+    "value": 12060,
+    "main_code": "Data",
+    "secondary_code": "Incorrect SKU selection during cycle count due to description-based identification",
+    "adjusted_to_main": 0.07423196885146996
+  },
+  {
+    "item_id": "60594",
+    "description": "SA68-7-ENC",
+    "findings": "Transfer was made incorrectly was counting for a pallet of SA63-7 and was not in there",
+    "pct_adjusted": 3.7,
+    "value": 16686,
+    "main_code": "Execution",
+    "secondary_code": "Incorrect pallet labeling during bin-to-bin movement",
+    "adjusted_to_main": 1
+  },
+  {
+    "item_id": "CAB.AL.SAS42-4",
+    "description": "42SAS-4 CABINET",
+    "findings": "Not adjusted after the new product (not transfer to the new SKU, but the product phisical was use for the new SKU)",
+    "pct_adjusted": 2.6,
+    "value": 11669,
+    "main_code": "Data",
+    "secondary_code": "Stock not migrated to new SKU or revision",
+    "adjusted_to_main": 0.07182213459608851
+  },
+  {
+    "item_id": "MISC.MAGNET.CUP",
+    "description": "MAGNET GRILLE CUPS",
+    "findings": "difference is with WIP grilles units, that are kitted",
+    "pct_adjusted": 2.6,
+    "value": 11540,
+    "main_code": "Process",
+    "secondary_code": "Known inventory issues without defined corrective action plan",
+    "adjusted_to_main": 0.05682366289685811
+  },
+  {
+    "item_id": "93775",
+    "description": "SA68 DEMO CASE",
+    "findings": "tag incorrect",
+    "pct_adjusted": 2.6,
+    "value": 11524,
+    "main_code": "Data",
+    "secondary_code": "Incorrect SKU selected during inventory tagging due to similar descriptions",
+    "adjusted_to_main": 0.07092899882696914
+  },
+  {
+    "item_id": "60035",
+    "description": "PP15-M",
+    "findings": "early 2025 error/ an order was cancelled  requesting to change to a transformer and the FG was created",
+    "pct_adjusted": 2.4,
+    "value": 10536,
+    "main_code": "Process",
+    "secondary_code": "Undefined cancellation and notification process between ERP, MRP and ISS",
+    "adjusted_to_main": 0.05187996997809169
+  },
+  {
+    "item_id": "CAB.AL.OMNI89-P",
+    "description": "OMNI89AT PLANTER CABINET RAW",
+    "findings": "Scrap Process",
+    "pct_adjusted": 2.3,
+    "value": 10140,
+    "main_code": "Process",
+    "secondary_code": "Scrap generated due to undefined or incomplete process",
+    "adjusted_to_main": 0.04992982618979415
+  },
+  {
+    "item_id": "60395",
+    "description": "SA7-GRILLE-S-SR",
+    "findings": "Wrong Adjustment",
+    "pct_adjusted": 2.1,
+    "value": 9579,
+    "main_code": "Data",
+    "secondary_code": "Incorrect SKU selection during cycle count due to description-based identification",
+    "adjusted_to_main": 0.05895960324991959
+  },
+  {
+    "item_id": "143285",
+    "description": "SCREW ADJUSTMENT S3",
+    "findings": "tag incorrect",
+    "pct_adjusted": 2.1,
+    "value": 9442,
+    "main_code": "Data",
+    "secondary_code": "Incorrect SKU selected during inventory tagging due to similar descriptions",
+    "adjusted_to_main": 0.058115437118024825
+  },
+  {
+    "item_id": "60423",
+    "description": "QX1020",
+    "findings": "Wrong Adjustment",
+    "pct_adjusted": 2.2,
+    "value": 10025,
+    "main_code": "Data",
+    "secondary_code": "Stock not migrated to new SKU or revision",
+    "adjusted_to_main": 0.06170622378484086
+  },
+  {
+    "item_id": "60207",
+    "description": "SPL3-LCR-75",
+    "findings": "Wrong Adjustment",
+    "pct_adjusted": 1.9,
+    "value": 8664,
+    "main_code": "Transactions",
+    "secondary_code": "Established adjustment process not followed during cycle count",
+    "adjusted_to_main": 0.13218136124232147
+  },
+  {
+    "item_id": "SA3-SP-24",
+    "description": "63SA SPACER EXTRUSION",
+    "findings": "Short Pids",
+    "pct_adjusted": 1.9,
+    "value": 8486,
+    "main_code": "Transactions",
+    "secondary_code": "Established adjustment process not followed during cycle count",
+    "adjusted_to_main": 0.1294613597877893
+  },
+  {
+    "item_id": "60101",
+    "description": "W53Q",
+    "findings": "PIDs with FG",
+    "pct_adjusted": 1.9,
+    "value": 8325,
+    "main_code": "Process",
+    "secondary_code": "PID and FG flow mismanagement due to unclear ownership and product type distinction",
+    "adjusted_to_main": 0.0409908509994767
+  },
+  {
+    "item_id": "CAB.AL.PT1200M",
+    "description": "CABINET ALUMINUM 1200PP SINGLE",
+    "findings": "PIDs with FG",
+    "pct_adjusted": 1.8,
+    "value": 8034,
+    "main_code": "Process",
+    "secondary_code": "PID and FG flow mismanagement due to unclear ownership and product type distinction",
+    "adjusted_to_main": 0.03956170574369036
+  }
+]

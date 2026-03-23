@@ -1,0 +1,25 @@
+{
+  "name": "inventory-war",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miguelimon-ui/inventory-war.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/miguelimon-ui/inventory-war/issues"
+  },
+  "homepage": "https://github.com/miguelimon-ui/inventory-war#readme",
+  "dependencies": {
+    "@netlify/blobs": "^10.7.4",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,281 @@
+[
+  {
+    "id": "rigo",
+    "name": "Rigo",
+    "color": "#00A3E1",
+    "role": "Meeting Leader & Inventory Controls",
+    "responsibilities": [
+      "$344K gap tracking & reporting",
+      "Issue to Kit (Phase 2A) coordination",
+      "Grille & Trim Kit creation",
+      "MTS vs Physical reconciliation",
+      "Known inventory issues management"
+    ],
+    "actions": [
+      {
+        "title": "Issue to Kit — waiting Phase 1 (Peter Winter)",
+        "status": "pending",
+        "root_cause": "Process Breakdown",
+        "blocker": "Phase 1"
+      },
+      {
+        "title": "Grille Kit SKU creation — pending PS Item IDs",
+        "status": "pending",
+        "root_cause": "Identification Failure"
+      },
+      {
+        "title": "MTS vs Physical reconciliation",
+        "status": "active",
+        "root_cause": "System Misalignment"
+      },
+      {
+        "title": "PPX cabinetry creation",
+        "status": "pending",
+        "root_cause": "Known Issues"
+      },
+      {
+        "title": "Wedge cabinet BOM proposal",
+        "status": "pending",
+        "root_cause": "Known Issues"
+      }
+    ],
+    "weekly": []
+  },
+  {
+    "id": "stephanie",
+    "name": "Stephanie",
+    "color": "#EF5350",
+    "role": "PID Flow & Cycle Count Program",
+    "responsibilities": [
+      "Short PID tracking & analysis",
+      "Cycle count program 2026",
+      "Scrap SOP & monitoring",
+      "FG Reconciliations",
+      "Adjustment approvals"
+    ],
+    "actions": [
+      {
+        "title": "Trufig containment — worsening 27→47 in 6 weeks",
+        "status": "alert",
+        "root_cause": "Process Breakdown"
+      },
+      {
+        "title": "CC adjustments routed through Stephanie",
+        "status": "active",
+        "root_cause": "Verification Gap"
+      },
+      {
+        "title": "Scrap SOP completed",
+        "status": "done",
+        "root_cause": "Training"
+      },
+      {
+        "title": "Cycle count process doc created",
+        "status": "done",
+        "root_cause": "Verification Gap"
+      },
+      {
+        "title": "Adjustment routing established",
+        "status": "done",
+        "root_cause": "Verification Gap"
+      }
+    ],
+    "weekly": [
+      {
+        "metric": "Trufig short PIDs",
+        "last_week": 47
+      },
+      {
+        "metric": "WIP Error",
+        "last_week": 35
+      },
+      {
+        "metric": "Adj Requested",
+        "last_week": 1
+      },
+      {
+        "metric": "Cycle count instances",
+        "last_week": null
+      }
+    ]
+  },
+  {
+    "id": "alex",
+    "name": "Alex",
+    "color": "#7E57C2",
+    "role": "Obsolete SKUs, BOM Verification & Duplicates",
+    "responsibilities": [
+      "Legacy component deactivation",
+      "BOM verification with Engineering",
+      "Duplicate SKU identification",
+      "Stock not migrated to new SKU"
+    ],
+    "actions": [
+      {
+        "title": "Deactivation plan — capture in NPD process",
+        "status": "pending",
+        "root_cause": "Material Flow"
+      },
+      {
+        "title": "Legacy component list created",
+        "status": "done",
+        "root_cause": "Material Flow"
+      },
+      {
+        "title": "Item costs added to list",
+        "status": "done",
+        "root_cause": "Material Flow"
+      },
+      {
+        "title": "NPD process capture established",
+        "status": "done",
+        "root_cause": "Material Flow"
+      }
+    ],
+    "weekly": []
+  },
+  {
+    "id": "carlos",
+    "name": "Carlos",
+    "color": "#FFA726",
+    "role": "Supplier Management & Receiving Accuracy",
+    "responsibilities": [
+      "Supplier labeling standards",
+      "Bonita invoice error tracking",
+      "Custom BOM orders review",
+      "Purchasing attributes update",
+      "Long-term: Bonita tagging system"
+    ],
+    "actions": [
+      {
+        "title": "Bonita tagging system (long-term)",
+        "status": "pending",
+        "root_cause": "Identification Failure"
+      },
+      {
+        "title": "Pre-Receiving Invoice Verification",
+        "status": "done",
+        "root_cause": "Identification Failure"
+      },
+      {
+        "title": "Custom BOM orders reviewed",
+        "status": "done",
+        "root_cause": "Identification Failure"
+      },
+      {
+        "title": "Ordering SOP created",
+        "status": "done",
+        "root_cause": "Training"
+      },
+      {
+        "title": "Pricing attributes updated",
+        "status": "done",
+        "root_cause": "System Misalignment"
+      }
+    ],
+    "weekly": []
+  },
+  {
+    "id": "lidia",
+    "name": "Lidia",
+    "color": "#F9A825",
+    "role": "Warehouse Operations & Receiving",
+    "responsibilities": [
+      "Material verification at dock",
+      "Count sheet accuracy (V5)",
+      "Material identification",
+      "Kitted grille/trim counting",
+      "Coordination with Carlos"
+    ],
+    "actions": [
+      {
+        "title": "V5 cross-reference for count sheets",
+        "status": "pending",
+        "root_cause": "Identification Failure"
+      },
+      {
+        "title": "Kitted grille counting methods",
+        "status": "pending",
+        "root_cause": "Process Breakdown"
+      },
+      {
+        "title": "Coordinate with Carlos on labeling",
+        "status": "active",
+        "root_cause": "Identification Failure"
+      }
+    ],
+    "weekly": []
+  },
+  {
+    "id": "alberto",
+    "name": "Alberto",
+    "color": "#00B2A9",
+    "role": "Production Manager",
+    "responsibilities": [
+      "Pick to WIP organization",
+      "Picking app coordination",
+      "Pallet labeling system",
+      "Bin-to-bin movements",
+      "Production floor accuracy"
+    ],
+    "actions": [
+      {
+        "title": "Pick to WIP Organization — URGENT (overdue Feb 28)",
+        "status": "alert",
+        "root_cause": "Material Flow"
+      },
+      {
+        "title": "Pallet labeling — expand to produced items",
+        "status": "pending",
+        "root_cause": "Identification Failure"
+      },
+      {
+        "title": "Receiving process for labeling & storage",
+        "status": "pending",
+        "root_cause": "Identification Failure"
+      },
+      {
+        "title": "Labeling system developed",
+        "status": "done",
+        "root_cause": "Identification Failure"
+      }
+    ],
+    "weekly": []
+  },
+  {
+    "id": "miguel",
+    "name": "Miguel",
+    "color": "#42A5F5",
+    "role": "App Development & Picking Implementation",
+    "responsibilities": [
+      "Inventory War app",
+      "Picking App Phase 4",
+      "Technical infrastructure",
+      "Team collaboration workflow"
+    ],
+    "actions": [
+      {
+        "title": "Evolve app with dynamic data",
+        "status": "active",
+        "root_cause": "Infrastructure"
+      },
+      {
+        "title": "Add data upload capability",
+        "status": "pending",
+        "root_cause": "Infrastructure"
+      },
+      {
+        "title": "Picking App Phase 4 — blocked by Phase 1",
+        "status": "pending",
+        "root_cause": "Process Breakdown",
+        "blocker": "Phase 1"
+      },
+      {
+        "title": "Set up Claude web + Monday MCP for team",
+        "status": "active",
+        "root_cause": "Infrastructure"
+      }
+    ],
+    "weekly": []
+  }
+]
