@@ -435,11 +435,12 @@
                 </p>
                 <div class="gantt" id="pickingGantt"></div>
                 <div class="gantt-legend">
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: var(--beam);"></div> Infrastructure</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00B2A9;"></div> Process Design</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #7E57C2;"></div> Development</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #FFA726;"></div> Training & Rollout</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #4CAF50;"></div> Validation</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #EF5350;"></div> Pick Locations (BLOCKER)</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #7E57C2;"></div> IT — Michael Fagan</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #FFA726;"></div> Finance</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00B2A9;"></div> Production — Alberto/Tania</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: var(--beam);"></div> App Dev — Miguel</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #4CAF50;"></div> Ongoing Ops</div>
                 </div>
             </div>
         </div>
@@ -780,44 +781,48 @@
     }
 
     // ===== PICKING GANTT =====
-    const ganttWeeks = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
+    const ganttWeeks = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12','W13','W14'];
     const totalWeeks = ganttWeeks.length;
 
-    // Phases & tasks with dependencies
-    // start/end are 0-indexed week numbers, deps are task ids
+    // Real phases from Picking App doc — consolidated with technical detail
     const ganttTasks = [
-        // Phase 1: Assessment & Foundation
-        { id: 'p1', phase: 'Phase 1 — Assessment & Foundation', isPhase: true },
-        { id: 'a1', name: 'Map current picking flow', start: 0, end: 1, color: '#00B2A9', cat: 'process', deps: [], addresses: '' },
-        { id: 'a2', name: 'Identify gap points (where tracking breaks)', start: 0, end: 1, color: '#00B2A9', cat: 'process', deps: [], addresses: '' },
-        { id: 'a3', name: 'Define target state & success metrics', start: 1, end: 2, color: '#00B2A9', cat: 'process', deps: ['a1','a2'], addresses: '' },
-        { id: 'a4', name: 'Evaluate scanner/hardware options', start: 1, end: 2, color: 'var(--beam)', cat: 'infra', deps: ['a1'], addresses: '' },
+        // Phase 1: Fixed Pick Locations — BLOCKER
+        { id: 'p1', phase: 'Phase 1 — Fixed Pick Locations · BLOCKER', isPhase: true },
+        { id: '1a', name: 'Define fixed pick locations list', start: 0, end: 1, color: '#EF5350', cat: 'infra', deps: [], owner: 'Miguel', addresses: '' },
+        { id: '1b', name: 'Deliver list to IT', start: 1, end: 1.5, color: '#EF5350', cat: 'infra', deps: ['1a'], owner: 'Miguel', addresses: 'DONE — Mar 20' },
+        { id: '1c', name: 'Massive upload pick locations in PS', start: 1.5, end: 2.5, color: '#EF5350', cat: 'infra', deps: ['1b'], owner: 'IT — Peter', addresses: '~20 min, surgical — zero PID movement' },
+        { id: '1d', name: 'Validate locations in PS match physical', start: 2.5, end: 3, color: '#EF5350', cat: 'infra', deps: ['1c'], owner: 'Miguel + Production', addresses: '' },
 
-        // Phase 2: Infrastructure
-        { id: 'p2', phase: 'Phase 2 — Infrastructure Setup', isPhase: true },
-        { id: 'b1', name: 'Procure barcode scanners', start: 2, end: 4, color: 'var(--beam)', cat: 'infra', deps: ['a4'], addresses: 'Identification Failure' },
-        { id: 'b2', name: 'Label all pick locations (bins/shelves)', start: 2, end: 4, color: 'var(--beam)', cat: 'infra', deps: ['a3'], addresses: 'Identification Failure' },
-        { id: 'b3', name: 'Verify/print SKU barcodes on all items', start: 3, end: 5, color: 'var(--beam)', cat: 'infra', deps: ['b1'], addresses: 'Identification Failure' },
-        { id: 'b4', name: 'Set up scanning app / integration layer', start: 3, end: 5, color: '#7E57C2', cat: 'dev', deps: ['b1','a3'], addresses: 'Material Flow' },
+        // Phase 2A: Issue to Kit Change (parallel to 2B)
+        { id: 'p2a', phase: 'Phase 2A — Issue to Kit Change · IT', isPhase: true },
+        { id: '2a1', name: 'Configure Issue-to-Kit in PS', start: 3, end: 4, color: '#7E57C2', cat: 'it', deps: ['1c'], owner: 'IT — Michael Fagan', addresses: 'System Misalignment' },
+        { id: '2a2', name: 'Test kit transactions with sample orders', start: 4, end: 5, color: '#7E57C2', cat: 'it', deps: ['2a1'], owner: 'IT — Michael Fagan', addresses: '' },
 
-        // Phase 3: Core Features
-        { id: 'p3', phase: 'Phase 3 — Core Features', isPhase: true },
-        { id: 'c1', name: 'Barcode scan at pick point', start: 5, end: 7, color: '#7E57C2', cat: 'dev', deps: ['b3','b4'], addresses: 'Identification Failure — $44K' },
-        { id: 'c2', name: 'Auto-register material on pull', start: 5, end: 7, color: '#7E57C2', cat: 'dev', deps: ['b4'], addresses: 'Material Flow — $33K' },
-        { id: 'c3', name: 'PID validation at pull time', start: 6, end: 8, color: '#7E57C2', cat: 'dev', deps: ['c1'], addresses: 'Process Breakdown — $108K' },
-        { id: 'c4', name: 'Dual confirmation (qty + SKU)', start: 7, end: 8, color: '#7E57C2', cat: 'dev', deps: ['c1','c2'], addresses: 'Verification Gap — $85K' },
+        // Phase 2B: Finance Change (parallel to 2A)
+        { id: 'p2b', phase: 'Phase 2B — Finance Change · Parallel to 2A', isPhase: true },
+        { id: '2b1', name: 'Update cost accounting for pick locations', start: 3, end: 4.5, color: '#FFA726', cat: 'finance', deps: ['1c'], owner: 'Finance', addresses: 'Verification Gap' },
+        { id: '2b2', name: 'Validate financial reports post-change', start: 4.5, end: 5, color: '#FFA726', cat: 'finance', deps: ['2b1'], owner: 'Finance', addresses: '' },
 
-        // Phase 4: Training & Pilot
-        { id: 'p4', phase: 'Phase 4 — Training & Rollout', isPhase: true },
-        { id: 'd1', name: 'Write SOPs for new picking process', start: 7, end: 8, color: '#FFA726', cat: 'training', deps: ['c1','c2'], addresses: 'Training/Standardization' },
-        { id: 'd2', name: 'Train operators (Bldg 2220 team)', start: 8, end: 9, color: '#FFA726', cat: 'training', deps: ['d1','c3','c4'], addresses: 'Training/Standardization' },
-        { id: 'd3', name: 'Pilot with top 5 high-impact SKUs', start: 9, end: 10, color: '#FFA726', cat: 'training', deps: ['d2'], addresses: 'All root causes' },
+        // Phase 3: Move Material to Pick Locations
+        { id: 'p3', phase: 'Phase 3 — Move Material to Pick Locations', isPhase: true },
+        { id: '3a', name: 'Plan material movement (priority SKUs first)', start: 5, end: 6, color: '#00B2A9', cat: 'production', deps: ['1d'], owner: 'Alberto/Tania', addresses: 'Material Flow — $33K' },
+        { id: '3b', name: 'Execute physical move to pick locations', start: 6, end: 8, color: '#00B2A9', cat: 'production', deps: ['3a'], owner: 'Alberto/Tania', addresses: '' },
+        { id: '3c', name: 'Verify PS quantities match physical in locations', start: 7, end: 8.5, color: '#00B2A9', cat: 'production', deps: ['3a'], owner: 'Alberto/Tania + Miguel', addresses: 'Identification Failure — $44K' },
 
-        // Phase 5: Validation
-        { id: 'p5', phase: 'Phase 5 — Validation & Full Rollout', isPhase: true },
-        { id: 'e1', name: 'Measure pilot: compare variance vs baseline', start: 10, end: 11, color: '#4CAF50', cat: 'validation', deps: ['d3'], addresses: '$270K target' },
-        { id: 'e2', name: 'Adjust & fix issues from pilot', start: 10, end: 11, color: '#4CAF50', cat: 'validation', deps: ['d3'], addresses: '' },
-        { id: 'e3', name: 'Full rollout to all SKUs', start: 11, end: 12, color: '#4CAF50', cat: 'validation', deps: ['e1','e2'], addresses: 'All root causes — $270K' },
+        // Phase 4: Go-Live App de Picking
+        { id: 'p4', phase: 'Phase 4 — Go-Live Picking App', isPhase: true },
+        { id: '4a', name: 'Build scanning app / integration layer', start: 3, end: 6, color: 'var(--beam)', cat: 'dev', deps: ['1c'], owner: 'Miguel', addresses: 'Can start after Phase 1' },
+        { id: '4b', name: 'Barcode scan at pick point', start: 6, end: 7.5, color: 'var(--beam)', cat: 'dev', deps: ['4a','3a'], owner: 'Miguel', addresses: 'Identification Failure — $44K' },
+        { id: '4c', name: 'Auto-register material on pull', start: 7, end: 8.5, color: 'var(--beam)', cat: 'dev', deps: ['4b'], owner: 'Miguel', addresses: 'Material Flow — $33K' },
+        { id: '4d', name: 'PID validation at pull time', start: 8, end: 9.5, color: 'var(--beam)', cat: 'dev', deps: ['4c'], owner: 'Miguel', addresses: 'Process Breakdown — $108K' },
+        { id: '4e', name: 'Dual confirmation (qty + SKU)', start: 9, end: 10, color: 'var(--beam)', cat: 'dev', deps: ['4d'], owner: 'Miguel', addresses: 'Verification Gap — $85K' },
+        { id: '4f', name: 'Pilot with top 5 high-impact SKUs', start: 10, end: 11, color: 'var(--beam)', cat: 'dev', deps: ['4e','3b'], owner: 'Miguel + Production', addresses: 'All root causes' },
+        { id: '4g', name: 'Go-live full rollout', start: 11, end: 12, color: 'var(--beam)', cat: 'dev', deps: ['4f'], owner: 'Miguel', addresses: '$270K target' },
+
+        // Phase 5: Ongoing
+        { id: 'p5', phase: 'Phase 5 — Ongoing: Maintain + Bin-to-Bin Restock', isPhase: true },
+        { id: '5a', name: 'Define restock triggers & bin-to-bin transfers', start: 11, end: 12.5, color: '#4CAF50', cat: 'ops', deps: ['4f','2a2','2b2'], owner: 'Production', addresses: '' },
+        { id: '5b', name: 'Continuous monitoring & variance tracking', start: 12, end: 14, color: '#4CAF50', cat: 'ops', deps: ['4g'], owner: 'Production + Miguel', addresses: 'All root causes — $270K' },
     ];
 
     function renderGantt() {
@@ -839,8 +844,8 @@
             }
             const leftPct = (task.start / totalWeeks * 100).toFixed(2);
             const widthPct = ((task.end - task.start) / totalWeeks * 100).toFixed(2);
-            const depTags = task.deps.length > 0
-                ? `<span class="dep-tag">after ${task.deps.join(', ')}</span>`
+            const ownerTag = task.owner
+                ? `<span class="dep-tag">${task.owner}</span>`
                 : '';
             const addressTag = task.addresses
                 ? `<span style="font-size:9px;color:var(--beam);background:rgba(0,163,225,0.1);padding:2px 6px;border-radius:3px;font-weight:500;">${task.addresses}</span>`
@@ -848,8 +853,9 @@
 
             html += `<div class="gantt-row">
                 <div class="gantt-row-label">
-                    <span style="color:var(--text-muted);font-size:10px;font-weight:600;width:20px;">${task.id}</span>
-                    <span>${task.name}</span>
+                    <span style="color:var(--text-muted);font-size:10px;font-weight:600;width:24px;flex-shrink:0;">${task.id}</span>
+                    <span style="flex:1;">${task.name}</span>
+                    ${ownerTag}
                     ${addressTag}
                 </div>
                 <div class="gantt-row-bars">
