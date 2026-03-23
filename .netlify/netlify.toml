@@ -1,8 +1,8 @@
 functionsDirectory = "C:\\Users\\miguell\\inventory-war\\netlify\\functions"
 functionsDirectoryOrigin = "config-v1"
+redirectsOrigin = "config"
 plugins = []
 headers = []
-redirects = []
 
 [build]
 publish = "C:\\Users\\miguell\\inventory-war"
@@ -27,3 +27,15 @@ functions = "C:\\Users\\miguell\\inventory-war\\netlify\\functions"
 
 [functions."*"]
 node_bundler = "esbuild"
+
+[[redirects]]
+from = "/api/data"
+to = "/.netlify/functions/data"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

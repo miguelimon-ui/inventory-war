@@ -298,6 +298,21 @@
         .kit-table tr:hover { background: var(--surface2); }
         .kit-cost { font-weight: 500; color: var(--beam); }
 
+        /* Add Action Form */
+        .add-action-btn { width: 100%; padding: 8px; border: 1px dashed var(--border); background: transparent; color: var(--text-muted); cursor: pointer; border-radius: 4px; font-size: 12px; font-family: inherit; margin-top: 8px; transition: all 0.2s; }
+        .add-action-btn:hover { border-color: var(--beam); color: var(--beam); }
+        .action-form { margin-top: 8px; padding: 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); display: none; }
+        .action-form.show { display: block; }
+        .action-form input, .action-form select { width: 100%; padding: 8px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; font-family: inherit; margin-bottom: 8px; box-sizing: border-box; }
+        .action-form-btns { display: flex; gap: 8px; }
+        .action-form-btns button { padding: 6px 16px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+        .btn-save { background: var(--beam); border-color: var(--beam); color: white; }
+        .btn-cancel { background: transparent; color: var(--text-muted); }
+        .action-clickable { cursor: pointer; transition: opacity 0.2s; }
+        .action-clickable:hover { opacity: 0.7; }
+        .action-delete { float: right; color: var(--text-muted); cursor: pointer; font-size: 14px; opacity: 0; transition: opacity 0.2s; }
+        .team-actions li:hover .action-delete { opacity: 1; }
+
         /* Meeting Mode */
         .meeting-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; }
         .meeting-overlay.active { display: block; }
@@ -512,116 +527,15 @@
 
         <!-- Team -->
         <div id="team" class="section">
-            <div class="card">
-                <div class="card-title">Inventory Team — Owner Workspaces</div>
-                <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Each team member owns a section. Data here feeds the Tuesday meeting presentation.</p>
+            <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div class="card-title" style="margin-bottom:4px;">Inventory Team — Owner Workspaces</div>
+                    <p style="color:var(--text-muted);font-size:13px;margin:0;">Data loads from API. Click actions to toggle status. Use + to add new actions.</p>
+                </div>
+                <div id="teamStatus" style="font-size:11px;color:var(--text-muted);"></div>
             </div>
-            <div class="team-grid">
-                <!-- Rigo -->
-                <div class="team-card" style="border-left-color:#00A3E1;">
-                    <div class="team-card-header">
-                        <div><div class="team-card-name" style="color:#00A3E1;">Rigo</div><div class="team-card-role">Meeting Leader & Inventory Controls</div></div>
-                    </div>
-                    <ul class="team-card-resp"><li>$344K gap tracking & reporting</li><li>Issue to Kit (Phase 2A) — coordination with IT</li><li>Grille & Trim Kit creation</li><li>MTS vs Physical reconciliation</li><li>Known inventory issues management</li></ul>
-                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
-                    <tbody><tr><td>Gap progress</td><td>—</td><td>—</td><td>—</td></tr><tr><td>New issues</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Actions completed</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
-                    <ul class="team-actions">
-                        <li><span class="uncheck">☐</span> Issue to Kit — waiting Phase 1 (Peter Winter)</li>
-                        <li><span class="uncheck">☐</span> Grille Kit SKU creation — pending PS Item IDs</li>
-                        <li><span class="uncheck">☐</span> MTS vs Physical reconciliation</li>
-                        <li><span class="uncheck">☐</span> PPX cabinetry creation</li>
-                        <li><span class="uncheck">☐</span> Wedge cabinet BOM proposal</li>
-                    </ul>
-                </div>
-                <!-- Stephanie -->
-                <div class="team-card" style="border-left-color:#EF5350;">
-                    <div class="team-card-header">
-                        <div><div class="team-card-name" style="color:#EF5350;">Stephanie</div><div class="team-card-role">PID Flow & Cycle Count Program</div></div>
-                    </div>
-                    <ul class="team-card-resp"><li>Short PID tracking & analysis</li><li>Cycle count program 2026</li><li>Scrap SOP & monitoring</li><li>FG Reconciliations</li><li>Adjustment approvals</li></ul>
-                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
-                    <tbody><tr><td>Trufig short PIDs</td><td>—</td><td>47</td><td class="trend-up">↑</td></tr><tr><td>WIP Error</td><td>—</td><td>35</td><td class="trend-stable">~</td></tr><tr><td>Adj Requested</td><td>—</td><td>1</td><td class="trend-down">↓</td></tr><tr><td>Cycle count instances</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
-                    <ul class="team-actions">
-                        <li class="urgent"><span class="uncheck">☐</span> Trufig containment — worsening 27→47 in 6 weeks</li>
-                        <li><span class="uncheck">☐</span> CC adjustments routed through Stephanie</li>
-                        <li class="done"><span class="check">✓</span> Scrap SOP completed (Feb 2026)</li>
-                        <li class="done"><span class="check">✓</span> Cycle count process doc created</li>
-                        <li class="done"><span class="check">✓</span> Adjustment routing established</li>
-                    </ul>
-                </div>
-                <!-- Alex -->
-                <div class="team-card" style="border-left-color:#7E57C2;">
-                    <div class="team-card-header">
-                        <div><div class="team-card-name" style="color:#7E57C2;">Alex</div><div class="team-card-role">Obsolete SKUs, BOM Verification & Duplicates</div></div>
-                    </div>
-                    <ul class="team-card-resp"><li>Legacy component deactivation</li><li>BOM verification with Engineering</li><li>Duplicate SKU identification</li><li>Stock not migrated to new SKU</li></ul>
-                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
-                    <tbody><tr><td>SKUs for deactivation</td><td>—</td><td>—</td><td>—</td></tr><tr><td>BOMs verified</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Duplicates resolved</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
-                    <ul class="team-actions">
-                        <li><span class="uncheck">☐</span> Deactivation plan — capture in NPD process</li>
-                        <li class="done"><span class="check">✓</span> Legacy component list created</li>
-                        <li class="done"><span class="check">✓</span> Item costs added to list</li>
-                        <li class="done"><span class="check">✓</span> NPD process capture established</li>
-                    </ul>
-                </div>
-                <!-- Carlos -->
-                <div class="team-card" style="border-left-color:#FFA726;">
-                    <div class="team-card-header">
-                        <div><div class="team-card-name" style="color:#FFA726;">Carlos</div><div class="team-card-role">Supplier Management & Receiving Accuracy</div></div>
-                    </div>
-                    <ul class="team-card-resp"><li>Supplier labeling standards</li><li>Bonita invoice error tracking</li><li>Custom BOM orders review</li><li>Purchasing attributes update</li><li>Long-term: Bonita tagging system</li></ul>
-                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
-                    <tbody><tr><td>Invoice errors caught</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Labeling issues</td><td>—</td><td>—</td><td>—</td></tr><tr><td>BOM orders reviewed</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
-                    <ul class="team-actions">
-                        <li><span class="uncheck">☐</span> Bonita tagging system (long-term)</li>
-                        <li class="done"><span class="check">✓</span> Pre-Receiving Invoice Verification</li>
-                        <li class="done"><span class="check">✓</span> Custom BOM orders reviewed</li>
-                        <li class="done"><span class="check">✓</span> Ordering SOP created</li>
-                        <li class="done"><span class="check">✓</span> Pricing attributes updated</li>
-                    </ul>
-                </div>
-                <!-- Lidia -->
-                <div class="team-card" style="border-left-color:#F9A825;">
-                    <div class="team-card-header">
-                        <div><div class="team-card-name" style="color:#F9A825;">Lidia</div><div class="team-card-role">Warehouse Operations & Receiving</div></div>
-                    </div>
-                    <ul class="team-card-resp"><li>Material verification at dock</li><li>Count sheet accuracy (V5)</li><li>Material identification</li><li>Kitted grille/trim counting</li><li>Coordination with Carlos</li></ul>
-                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
-                    <tbody><tr><td>Receiving discrepancies</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Count corrections</td><td>—</td><td>—</td><td>—</td></tr><tr><td>ID issues</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
-                    <ul class="team-actions">
-                        <li><span class="uncheck">☐</span> V5 cross-reference for count sheets</li>
-                        <li><span class="uncheck">☐</span> Kitted grille counting methods</li>
-                        <li><span class="uncheck">☐</span> Coordinate with Carlos on labeling</li>
-                    </ul>
-                </div>
-                <!-- Alberto -->
-                <div class="team-card" style="border-left-color:#00B2A9;">
-                    <div class="team-card-header">
-                        <div><div class="team-card-name" style="color:#00B2A9;">Alberto</div><div class="team-card-role">Production Manager</div></div>
-                    </div>
-                    <ul class="team-card-resp"><li>Pick to WIP organization</li><li>Picking app coordination</li><li>Pallet labeling system</li><li>Bin-to-bin movements</li><li>Production floor accuracy</li></ul>
-                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
-                    <tbody><tr><td>Pick to WIP issues</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Labeling errors</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Bin-to-bin issues</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
-                    <ul class="team-actions">
-                        <li class="urgent"><span class="uncheck">☐</span> Pick to WIP Organization — URGENT (overdue Feb 28)</li>
-                        <li><span class="uncheck">☐</span> Pallet labeling — expand to produced items</li>
-                        <li><span class="uncheck">☐</span> Receiving process for labeling & storage</li>
-                        <li class="done"><span class="check">✓</span> Labeling system developed</li>
-                    </ul>
-                </div>
-                <!-- Miguel -->
-                <div class="team-card" style="border-left-color:#42A5F5;">
-                    <div class="team-card-header">
-                        <div><div class="team-card-name" style="color:#42A5F5;">Miguel</div><div class="team-card-role">App Development & Picking Implementation</div></div>
-                    </div>
-                    <ul class="team-card-resp"><li>Inventory War app</li><li>Picking App Phase 4</li><li>Technical infrastructure</li><li>Team collaboration workflow</li></ul>
-                    <ul class="team-actions">
-                        <li><span class="uncheck">☐</span> Evolve app with team data integration</li>
-                        <li><span class="uncheck">☐</span> Add data upload capability</li>
-                        <li><span class="uncheck">☐</span> Picking App Phase 4 — blocked by Phase 1</li>
-                        <li><span class="uncheck">☐</span> Set up Claude web + Monday MCP for team</li>
-                    </ul>
-                </div>
+            <div class="team-grid" id="teamGrid">
+                <div style="color:var(--text-muted);padding:40px;text-align:center;">Loading team data...</div>
             </div>
         </div>
 
@@ -1067,38 +981,161 @@
     }
     renderGantt();
 
+    // ===== API & DYNAMIC DATA =====
+    const API = '/.netlify/functions/data';
+    let ownersData = [];
+
+    async function apiGet(key) {
+        const r = await fetch(`${API}?key=${key}`);
+        if (!r.ok) return null;
+        return r.json();
+    }
+    async function apiPut(key, data) {
+        await fetch(`${API}?key=${key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    }
+
+    function renderTeamCard(owner, idx) {
+        const respHtml = owner.responsibilities.map(r => `<li>${r}</li>`).join('');
+        const weeklyHtml = owner.weekly && owner.weekly.length > 0
+            ? `<table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead><tbody>${
+                owner.weekly.map(w => `<tr><td>${w.metric}</td><td>${w.this_week || '—'}</td><td>${w.last_week || '—'}</td><td>${w.trend || '—'}</td></tr>`).join('')
+            }</tbody></table>` : '';
+        const actionsHtml = owner.actions.map((a, ai) => {
+            const isDone = a.status === 'done';
+            const isAlert = a.status === 'alert';
+            const cls = isDone ? 'done action-clickable' : (isAlert ? 'urgent action-clickable' : 'action-clickable');
+            const icon = isDone ? '<span class="check">✓</span>' : '<span class="uncheck">☐</span>';
+            return `<li class="${cls}" onclick="toggleAction(${idx},${ai})">
+                ${icon} ${a.title}${a.blocker ? ` <span style="font-size:10px;color:var(--text-muted);">[blocked: ${a.blocker}]</span>` : ''}
+                <span class="action-delete" onclick="event.stopPropagation();deleteAction(${idx},${ai})">×</span>
+            </li>`;
+        }).join('');
+
+        return `<div class="team-card" style="border-left-color:${owner.color};">
+            <div class="team-card-header">
+                <div><div class="team-card-name" style="color:${owner.color};">${owner.name}</div><div class="team-card-role">${owner.role}</div></div>
+                <div style="font-size:11px;color:var(--text-muted);">${owner.actions.filter(a=>a.status==='done').length}/${owner.actions.length} done</div>
+            </div>
+            <ul class="team-card-resp">${respHtml}</ul>
+            ${weeklyHtml}
+            <ul class="team-actions">${actionsHtml}</ul>
+            <button class="add-action-btn" onclick="showAddForm(${idx})">+ Add Action</button>
+            <div class="action-form" id="form-${idx}">
+                <input type="text" id="form-title-${idx}" placeholder="Action title...">
+                <div style="display:flex;gap:8px;">
+                    <select id="form-status-${idx}"><option value="pending">Pending</option><option value="active">Active</option><option value="alert">Alert</option></select>
+                    <input type="text" id="form-rc-${idx}" placeholder="Root cause..." style="flex:1;">
+                </div>
+                <input type="text" id="form-blocker-${idx}" placeholder="Blocker (optional)">
+                <div class="action-form-btns">
+                    <button class="btn-save" onclick="saveAction(${idx})">Save</button>
+                    <button class="btn-cancel" onclick="hideAddForm(${idx})">Cancel</button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderTeamGrid() {
+        document.getElementById('teamGrid').innerHTML = ownersData.map((o, i) => renderTeamCard(o, i)).join('');
+    }
+
+    async function loadTeam() {
+        document.getElementById('teamStatus').textContent = 'Loading...';
+        const data = await apiGet('owners');
+        if (data) {
+            ownersData = data;
+            renderTeamGrid();
+            document.getElementById('teamStatus').textContent = 'Live from API';
+        } else {
+            document.getElementById('teamStatus').textContent = 'API unavailable — showing cached';
+        }
+    }
+
+    async function toggleAction(ownerIdx, actionIdx) {
+        const a = ownersData[ownerIdx].actions[actionIdx];
+        if (a.status === 'done') a.status = 'pending';
+        else if (a.status === 'alert') a.status = 'done';
+        else if (a.status === 'active') a.status = 'done';
+        else a.status = 'active';
+        renderTeamGrid();
+        await apiPut('owners', ownersData);
+    }
+
+    async function deleteAction(ownerIdx, actionIdx) {
+        if (!confirm('Delete this action?')) return;
+        ownersData[ownerIdx].actions.splice(actionIdx, 1);
+        renderTeamGrid();
+        await apiPut('owners', ownersData);
+    }
+
+    function showAddForm(idx) { document.getElementById(`form-${idx}`).classList.add('show'); document.getElementById(`form-title-${idx}`).focus(); }
+    function hideAddForm(idx) { document.getElementById(`form-${idx}`).classList.remove('show'); }
+
+    async function saveAction(idx) {
+        const title = document.getElementById(`form-title-${idx}`).value.trim();
+        if (!title) return;
+        const status = document.getElementById(`form-status-${idx}`).value;
+        const rc = document.getElementById(`form-rc-${idx}`).value.trim();
+        const blocker = document.getElementById(`form-blocker-${idx}`).value.trim();
+        ownersData[idx].actions.push({ title, status, root_cause: rc || '', blocker: blocker || '' });
+        renderTeamGrid();
+        await apiPut('owners', ownersData);
+    }
+
+    // Load team on page load
+    loadTeam();
+
+    // Also load Pareto from API and update chart
+    async function loadPareto() {
+        const data = await apiGet('pareto');
+        if (!data) return;
+        const maxDif = Math.max(...data.map(p => p.value));
+        let cumul = 0;
+        const total = data.reduce((s, p) => s + p.value, 0);
+        document.getElementById('paretoChart').innerHTML = data.map(p => {
+            cumul += p.value;
+            const pct = (p.value / maxDif * 100).toFixed(1);
+            const cumulPct = (cumul / total * 100).toFixed(1);
+            const color = '#EF5350';
+            return `<div class="pareto-bar-row" title="${p.description} — ${p.findings}">
+                <div class="pareto-label"><strong>${p.item_id}</strong> <span style="color:var(--text-muted);font-size:11px;">${p.description}</span></div>
+                <div class="pareto-bar-wrapper"><div class="pareto-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+                <div class="pareto-value" style="color:${color}">$${(p.value/1000).toFixed(1)}K</div>
+                <div class="pareto-cumul">${cumulPct}%</div>
+            </div>`;
+        }).join('') + `<div style="margin-top:16px;font-size:11px;color:var(--text-muted);font-weight:500;">
+            <span style="color:var(--beam);">Source: Pareto INV Count 2025.xlsx</span> — ${data.length} items, $${(total/1000).toFixed(0)}K total
+        </div>`;
+    }
+    loadPareto();
+
     // ===== MEETING MODE =====
+    function getOwnerCard(id) {
+        const idx = ownersData.findIndex(o => o.id === id);
+        if (idx < 0) return '<p style="color:var(--text-muted)">No data</p>';
+        return renderTeamCard(ownersData[idx], idx);
+    }
     const meetingSteps = [
         { name: 'Executive Summary', color: 'var(--beam)', content: () => document.getElementById('overview').innerHTML },
-        { name: 'Stephanie — PID Flow', color: '#EF5350', content: () => {
-            const card = document.querySelectorAll('.team-card')[1];
-            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#EF5350">Stephanie</div><div class="meeting-owner-role">PID Flow & Cycle Count Program</div></div>` + card.innerHTML;
-        }},
-        { name: 'Alex — Obsolete SKUs', color: '#7E57C2', content: () => {
-            const card = document.querySelectorAll('.team-card')[2];
-            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#7E57C2">Alex</div><div class="meeting-owner-role">Obsolete SKUs, BOM Verification & Duplicates</div></div>` + card.innerHTML;
-        }},
-        { name: 'Carlos & Lidia — Suppliers + Warehouse', color: '#FFA726', content: () => {
-            const carlos = document.querySelectorAll('.team-card')[3];
-            const lidia = document.querySelectorAll('.team-card')[4];
-            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#FFA726">Carlos & Lidia</div><div class="meeting-owner-role">Supplier Management + Warehouse Operations</div></div><div class="team-grid">` +
-                `<div class="team-card" style="border-left-color:#FFA726">${carlos.innerHTML}</div>` +
-                `<div class="team-card" style="border-left-color:#F9A825">${lidia.innerHTML}</div></div>`;
-        }},
-        { name: 'Alberto — Production', color: '#00B2A9', content: () => {
-            const card = document.querySelectorAll('.team-card')[5];
-            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#00B2A9">Alberto</div><div class="meeting-owner-role">Production Manager</div></div>` + card.innerHTML;
-        }},
-        { name: 'Rigo — Controls & Kits', color: '#00A3E1', content: () => {
-            const card = document.querySelectorAll('.team-card')[0];
-            const kits = document.getElementById('kits').innerHTML;
-            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#00A3E1">Rigo</div><div class="meeting-owner-role">Meeting Leader & Inventory Controls</div></div>` + card.innerHTML + `<div style="margin-top:32px">${kits}</div>`;
-        }},
+        { name: 'Stephanie — PID Flow', color: '#EF5350', content: () =>
+            `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#EF5350">Stephanie</div><div class="meeting-owner-role">PID Flow & Cycle Count Program</div></div>` + getOwnerCard('stephanie')
+        },
+        { name: 'Alex — Obsolete SKUs', color: '#7E57C2', content: () =>
+            `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#7E57C2">Alex</div><div class="meeting-owner-role">Obsolete SKUs, BOM Verification & Duplicates</div></div>` + getOwnerCard('alex')
+        },
+        { name: 'Carlos & Lidia — Suppliers + Warehouse', color: '#FFA726', content: () =>
+            `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#FFA726">Carlos & Lidia</div><div class="meeting-owner-role">Supplier Management + Warehouse Operations</div></div><div class="team-grid">${getOwnerCard('carlos')}${getOwnerCard('lidia')}</div>`
+        },
+        { name: 'Alberto — Production', color: '#00B2A9', content: () =>
+            `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#00B2A9">Alberto</div><div class="meeting-owner-role">Production Manager</div></div>` + getOwnerCard('alberto')
+        },
+        { name: 'Rigo — Controls & Kits', color: '#00A3E1', content: () =>
+            `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#00A3E1">Rigo</div><div class="meeting-owner-role">Meeting Leader & Inventory Controls</div></div>` + getOwnerCard('rigo') + `<div style="margin-top:32px">${document.getElementById('kits').innerHTML}</div>`
+        },
         { name: 'Picking Implementation', color: 'var(--beam)', content: () => document.getElementById('picking').innerHTML },
-        { name: 'Miguel — App & Next Steps', color: '#42A5F5', content: () => {
-            const card = document.querySelectorAll('.team-card')[6];
-            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#42A5F5">Miguel</div><div class="meeting-owner-role">App Development & Picking Implementation</div></div>` + card.innerHTML;
-        }}
+        { name: 'Miguel — App & Next Steps', color: '#42A5F5', content: () =>
+            `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#42A5F5">Miguel</div><div class="meeting-owner-role">App Development & Picking Implementation</div></div>` + getOwnerCard('miguel')
+        }
     ];
     let meetingIdx = 0;
 
