@@ -272,12 +272,55 @@
         .filter-btn:hover { border-color: var(--beam); color: var(--text-secondary); }
         .filter-btn.active { background: var(--beam); border-color: var(--beam); color: white; }
 
+        /* Team Cards */
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
+        .team-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; border-left: 4px solid; }
+        .team-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .team-card-name { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+        .team-card-role { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .team-card-resp { font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; }
+        .team-card-resp li { margin-bottom: 4px; }
+        .team-metrics { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+        .team-metrics th { text-align: left; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; padding: 8px; border-bottom: 1px solid var(--border); }
+        .team-metrics td { padding: 8px; border-bottom: 1px solid var(--border); }
+        .team-actions { list-style: none; padding: 0; margin: 12px 0 0; font-size: 13px; }
+        .team-actions li { padding: 6px 0; border-bottom: 1px solid var(--border); }
+        .team-actions li:last-child { border-bottom: none; }
+        .team-actions .done { text-decoration: line-through; color: var(--text-muted); }
+        .team-actions .urgent { color: #EF5350; font-weight: 600; }
+        .check { color: #4CAF50; margin-right: 6px; }
+        .uncheck { color: var(--text-muted); margin-right: 6px; }
+
+        /* Kit Tables */
+        .kit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .kit-table th { text-align: left; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+        .kit-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+        .kit-table tr:hover { background: var(--surface2); }
+        .kit-cost { font-weight: 500; color: var(--beam); }
+
+        /* Meeting Mode */
+        .meeting-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; overflow-y: auto; }
+        .meeting-overlay.active { display: block; }
+        .meeting-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface); border-top: 1px solid var(--border); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; z-index: 1001; }
+        .meeting-step { font-size: 13px; color: var(--text-muted); }
+        .meeting-step-name { font-size: 16px; font-weight: 500; color: var(--text); margin-left: 16px; }
+        .meeting-btn { padding: 10px 24px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 500; font-family: inherit; transition: all 0.2s; }
+        .meeting-btn:hover { background: var(--beam); border-color: var(--beam); color: white; }
+        .meeting-btn.primary { background: var(--beam); border-color: var(--beam); color: white; }
+        .meeting-content { padding: 32px; max-width: 1200px; margin: 0 auto 80px; }
+        .meeting-owner-header { text-align: center; margin-bottom: 32px; }
+        .meeting-owner-name { font-size: 36px; font-weight: 300; letter-spacing: -0.02em; }
+        .meeting-owner-role { font-size: 14px; color: var(--text-muted); margin-top: 8px; }
+        .present-btn { padding: 8px 16px; border: 1px solid var(--beam); background: transparent; color: var(--beam); cursor: pointer; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: inherit; text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s; }
+        .present-btn:hover { background: var(--beam); color: white; }
+
         @media (max-width: 768px) {
             .main { padding: 16px; }
             .kpi-row { grid-template-columns: 1fr 1fr; }
             .pareto-label { width: 120px; }
             .nav { overflow-x: auto; padding: 8px 16px 0; }
             .header { padding: 16px; }
+            .team-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -288,7 +331,10 @@
             <div class="subtitle">Wall-to-Wall 2025 — Pareto Mitigation Tracker</div>
             <div class="beam-accent"></div>
         </div>
-        <div class="date" id="currentDate"></div>
+        <div style="display:flex;align-items:center;gap:16px;">
+            <button class="present-btn" onclick="startMeeting()">▶ Present</button>
+            <div class="date" id="currentDate"></div>
+        </div>
     </div>
 
     <div class="nav">
@@ -297,6 +343,8 @@
         <button class="nav-btn" onclick="showSection('trends')">Weekly Trends</button>
         <button class="nav-btn" onclick="showSection('picking')">Picking</button>
         <button class="nav-btn" onclick="showSection('actions')">All Actions</button>
+        <button class="nav-btn" onclick="showSection('team')">Team</button>
+        <button class="nav-btn" onclick="showSection('kits')">Kits</button>
     </div>
 
     <div class="main">
@@ -459,6 +507,175 @@
                     <tbody id="actionsBody"></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+        <!-- Team -->
+        <div id="team" class="section">
+            <div class="card">
+                <div class="card-title">Inventory Team — Owner Workspaces</div>
+                <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Each team member owns a section. Data here feeds the Tuesday meeting presentation.</p>
+            </div>
+            <div class="team-grid">
+                <!-- Rigo -->
+                <div class="team-card" style="border-left-color:#00A3E1;">
+                    <div class="team-card-header">
+                        <div><div class="team-card-name" style="color:#00A3E1;">Rigo</div><div class="team-card-role">Meeting Leader & Inventory Controls</div></div>
+                    </div>
+                    <ul class="team-card-resp"><li>$344K gap tracking & reporting</li><li>Issue to Kit (Phase 2A) — coordination with IT</li><li>Grille & Trim Kit creation</li><li>MTS vs Physical reconciliation</li><li>Known inventory issues management</li></ul>
+                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
+                    <tbody><tr><td>Gap progress</td><td>—</td><td>—</td><td>—</td></tr><tr><td>New issues</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Actions completed</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+                    <ul class="team-actions">
+                        <li><span class="uncheck">☐</span> Issue to Kit — waiting Phase 1 (Peter Winter)</li>
+                        <li><span class="uncheck">☐</span> Grille Kit SKU creation — pending PS Item IDs</li>
+                        <li><span class="uncheck">☐</span> MTS vs Physical reconciliation</li>
+                        <li><span class="uncheck">☐</span> PPX cabinetry creation</li>
+                        <li><span class="uncheck">☐</span> Wedge cabinet BOM proposal</li>
+                    </ul>
+                </div>
+                <!-- Stephanie -->
+                <div class="team-card" style="border-left-color:#EF5350;">
+                    <div class="team-card-header">
+                        <div><div class="team-card-name" style="color:#EF5350;">Stephanie</div><div class="team-card-role">PID Flow & Cycle Count Program</div></div>
+                    </div>
+                    <ul class="team-card-resp"><li>Short PID tracking & analysis</li><li>Cycle count program 2026</li><li>Scrap SOP & monitoring</li><li>FG Reconciliations</li><li>Adjustment approvals</li></ul>
+                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
+                    <tbody><tr><td>Trufig short PIDs</td><td>—</td><td>47</td><td class="trend-up">↑</td></tr><tr><td>WIP Error</td><td>—</td><td>35</td><td class="trend-stable">~</td></tr><tr><td>Adj Requested</td><td>—</td><td>1</td><td class="trend-down">↓</td></tr><tr><td>Cycle count instances</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+                    <ul class="team-actions">
+                        <li class="urgent"><span class="uncheck">☐</span> Trufig containment — worsening 27→47 in 6 weeks</li>
+                        <li><span class="uncheck">☐</span> CC adjustments routed through Stephanie</li>
+                        <li class="done"><span class="check">✓</span> Scrap SOP completed (Feb 2026)</li>
+                        <li class="done"><span class="check">✓</span> Cycle count process doc created</li>
+                        <li class="done"><span class="check">✓</span> Adjustment routing established</li>
+                    </ul>
+                </div>
+                <!-- Alex -->
+                <div class="team-card" style="border-left-color:#7E57C2;">
+                    <div class="team-card-header">
+                        <div><div class="team-card-name" style="color:#7E57C2;">Alex</div><div class="team-card-role">Obsolete SKUs, BOM Verification & Duplicates</div></div>
+                    </div>
+                    <ul class="team-card-resp"><li>Legacy component deactivation</li><li>BOM verification with Engineering</li><li>Duplicate SKU identification</li><li>Stock not migrated to new SKU</li></ul>
+                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
+                    <tbody><tr><td>SKUs for deactivation</td><td>—</td><td>—</td><td>—</td></tr><tr><td>BOMs verified</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Duplicates resolved</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+                    <ul class="team-actions">
+                        <li><span class="uncheck">☐</span> Deactivation plan — capture in NPD process</li>
+                        <li class="done"><span class="check">✓</span> Legacy component list created</li>
+                        <li class="done"><span class="check">✓</span> Item costs added to list</li>
+                        <li class="done"><span class="check">✓</span> NPD process capture established</li>
+                    </ul>
+                </div>
+                <!-- Carlos -->
+                <div class="team-card" style="border-left-color:#FFA726;">
+                    <div class="team-card-header">
+                        <div><div class="team-card-name" style="color:#FFA726;">Carlos</div><div class="team-card-role">Supplier Management & Receiving Accuracy</div></div>
+                    </div>
+                    <ul class="team-card-resp"><li>Supplier labeling standards</li><li>Bonita invoice error tracking</li><li>Custom BOM orders review</li><li>Purchasing attributes update</li><li>Long-term: Bonita tagging system</li></ul>
+                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
+                    <tbody><tr><td>Invoice errors caught</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Labeling issues</td><td>—</td><td>—</td><td>—</td></tr><tr><td>BOM orders reviewed</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+                    <ul class="team-actions">
+                        <li><span class="uncheck">☐</span> Bonita tagging system (long-term)</li>
+                        <li class="done"><span class="check">✓</span> Pre-Receiving Invoice Verification</li>
+                        <li class="done"><span class="check">✓</span> Custom BOM orders reviewed</li>
+                        <li class="done"><span class="check">✓</span> Ordering SOP created</li>
+                        <li class="done"><span class="check">✓</span> Pricing attributes updated</li>
+                    </ul>
+                </div>
+                <!-- Lidia -->
+                <div class="team-card" style="border-left-color:#F9A825;">
+                    <div class="team-card-header">
+                        <div><div class="team-card-name" style="color:#F9A825;">Lidia</div><div class="team-card-role">Warehouse Operations & Receiving</div></div>
+                    </div>
+                    <ul class="team-card-resp"><li>Material verification at dock</li><li>Count sheet accuracy (V5)</li><li>Material identification</li><li>Kitted grille/trim counting</li><li>Coordination with Carlos</li></ul>
+                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
+                    <tbody><tr><td>Receiving discrepancies</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Count corrections</td><td>—</td><td>—</td><td>—</td></tr><tr><td>ID issues</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+                    <ul class="team-actions">
+                        <li><span class="uncheck">☐</span> V5 cross-reference for count sheets</li>
+                        <li><span class="uncheck">☐</span> Kitted grille counting methods</li>
+                        <li><span class="uncheck">☐</span> Coordinate with Carlos on labeling</li>
+                    </ul>
+                </div>
+                <!-- Alberto -->
+                <div class="team-card" style="border-left-color:#00B2A9;">
+                    <div class="team-card-header">
+                        <div><div class="team-card-name" style="color:#00B2A9;">Alberto</div><div class="team-card-role">Production Manager</div></div>
+                    </div>
+                    <ul class="team-card-resp"><li>Pick to WIP organization</li><li>Picking app coordination</li><li>Pallet labeling system</li><li>Bin-to-bin movements</li><li>Production floor accuracy</li></ul>
+                    <table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead>
+                    <tbody><tr><td>Pick to WIP issues</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Labeling errors</td><td>—</td><td>—</td><td>—</td></tr><tr><td>Bin-to-bin issues</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+                    <ul class="team-actions">
+                        <li class="urgent"><span class="uncheck">☐</span> Pick to WIP Organization — URGENT (overdue Feb 28)</li>
+                        <li><span class="uncheck">☐</span> Pallet labeling — expand to produced items</li>
+                        <li><span class="uncheck">☐</span> Receiving process for labeling & storage</li>
+                        <li class="done"><span class="check">✓</span> Labeling system developed</li>
+                    </ul>
+                </div>
+                <!-- Miguel -->
+                <div class="team-card" style="border-left-color:#42A5F5;">
+                    <div class="team-card-header">
+                        <div><div class="team-card-name" style="color:#42A5F5;">Miguel</div><div class="team-card-role">App Development & Picking Implementation</div></div>
+                    </div>
+                    <ul class="team-card-resp"><li>Inventory War app</li><li>Picking App Phase 4</li><li>Technical infrastructure</li><li>Team collaboration workflow</li></ul>
+                    <ul class="team-actions">
+                        <li><span class="uncheck">☐</span> Evolve app with team data integration</li>
+                        <li><span class="uncheck">☐</span> Add data upload capability</li>
+                        <li><span class="uncheck">☐</span> Picking App Phase 4 — blocked by Phase 1</li>
+                        <li><span class="uncheck">☐</span> Set up Claude web + Monday MCP for team</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kits -->
+        <div id="kits" class="section">
+            <div class="card" style="border-left: 4px solid var(--beam);">
+                <div class="card-title">Grille & Trim Kit Creation — Rigo</div>
+                <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Each kit = 1 Grille + 1 Trim → new SKU in PeopleSoft. Eliminates separate handling and reduces inventory discrepancies.</p>
+
+                <div class="card-title" style="margin-top:24px;">SA3 — 3" Grille/Trim Kits</div>
+                <table class="kit-table">
+                    <thead><tr><th>Kit Description</th><th>Grille Item</th><th>Grille Cost</th><th>Trim Item</th><th>Trim Cost</th><th>Total</th></tr></thead>
+                    <tbody>
+                        <tr><td>SA3 Square, SR</td><td>60199 — 63SA Grille 316L</td><td>$7.90</td><td>60313 — SA3-TRIM-S-SR</td><td>$5.50</td><td class="kit-cost">$13.40</td></tr>
+                        <tr><td>SA3 Square, RF</td><td>60199 — 63SA Grille 316L</td><td>$7.90</td><td>60201 — SA3-TRIM-S-RF</td><td>$20.47</td><td class="kit-cost">$28.37</td></tr>
+                        <tr><td>SA3 Square, SS</td><td>60199 — 63SA Grille 316L</td><td>$7.90</td><td>60268 — SA3-TRIM-S-SS</td><td>$4.82</td><td class="kit-cost">$12.72</td></tr>
+                        <tr><td>SA3 Round, SR</td><td>60390 — 63SA-GR-3R-316L</td><td>$7.90</td><td>60315 — SA3-TRIM-R-SR</td><td>$5.19</td><td class="kit-cost">$13.09</td></tr>
+                        <tr><td>SA3 Round, RF</td><td>60390 — 63SA-GR-3R-316L</td><td>$7.90</td><td>60316 — SA3-TRIM-R-RF</td><td>$18.54</td><td class="kit-cost">$26.44</td></tr>
+                        <tr><td>SA3 Round, SS</td><td>60390 — 63SA-GR-3R-316L</td><td>$7.90</td><td>60314 — SA3-TRIM-R-SS</td><td>$4.45</td><td class="kit-cost">$12.35</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="card-title" style="margin-top:24px;">SA4 — 4" Grille/Trim Kits</div>
+                <table class="kit-table">
+                    <thead><tr><th>Kit Description</th><th>Grille Item</th><th>Grille Cost</th><th>Trim Item</th><th>Trim Cost</th><th>Total</th></tr></thead>
+                    <tbody>
+                        <tr><td>SA4 Square, SR</td><td>60384 — 63SA-Grille-4S-W</td><td>$11.80</td><td>60306 — SA4-TRIM-S-SR</td><td>$8.19</td><td class="kit-cost">$19.99</td></tr>
+                        <tr><td>SA4 Square, RF</td><td>60384 — 63SA-Grille-4S-W</td><td>$11.80</td><td>60307 — SA4-TRIM-S-RF</td><td>$19.37</td><td class="kit-cost">$31.17</td></tr>
+                        <tr><td>SA4 Square, SS</td><td>60384 — 63SA-Grille-4S-W</td><td>$11.80</td><td>60305 — SA4-TRIM-S-SS</td><td>$7.47</td><td class="kit-cost">$19.27</td></tr>
+                        <tr><td>SA4 Round, SR</td><td>60386 — 63SA-Grille-4R-W</td><td>$11.80</td><td>60309 — SA4-TRIM-R-SR</td><td>$7.76</td><td class="kit-cost">$19.56</td></tr>
+                        <tr><td>SA4 Round, RF</td><td>60386 — 63SA-Grille-4R-W</td><td>$11.80</td><td>60310 — SA4-TRIM-R-RF</td><td>$19.37</td><td class="kit-cost">$31.17</td></tr>
+                        <tr><td>SA4 Round, SS</td><td>60386 — 63SA-Grille-4R-W</td><td>$11.80</td><td>60308 — SA4-TRIM-R-SS</td><td>$41.07</td><td class="kit-cost">$52.87</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="card-title" style="margin-top:24px;">Pending</div>
+                <ul class="team-actions">
+                    <li><span class="uncheck">☐</span> Assign new Item IDs in PeopleSoft for each kit</li>
+                    <li><span class="uncheck">☐</span> Define BOM in PS: Grille + Trim (+ Conversion Labor)</li>
+                    <li><span class="uncheck">☐</span> Confirm Issue to Kit (Phase 2A) vs standard assembly</li>
+                    <li><span class="uncheck">☐</span> Validate total costs with Finance</li>
+                    <li><span class="uncheck">☐</span> Define pick location for finished kits</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meeting Mode Overlay -->
+    <div class="meeting-overlay" id="meetingOverlay">
+        <div class="meeting-content" id="meetingContent"></div>
+        <div class="meeting-nav">
+            <button class="meeting-btn" onclick="meetingPrev()">← Previous</button>
+            <div><span class="meeting-step" id="meetingStep"></span><span class="meeting-step-name" id="meetingStepName"></span></div>
+            <button class="meeting-btn primary" onclick="meetingNext()">Next →</button>
         </div>
     </div>
 
@@ -745,7 +962,7 @@
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        event.target.classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
         if (id === 'trends') setTimeout(initCharts, 50);
     }
 
@@ -849,6 +1066,69 @@
         container.innerHTML = html;
     }
     renderGantt();
+
+    // ===== MEETING MODE =====
+    const meetingSteps = [
+        { name: 'Executive Summary', color: 'var(--beam)', content: () => document.getElementById('overview').innerHTML },
+        { name: 'Stephanie — PID Flow', color: '#EF5350', content: () => {
+            const card = document.querySelectorAll('.team-card')[1];
+            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#EF5350">Stephanie</div><div class="meeting-owner-role">PID Flow & Cycle Count Program</div></div>` + card.innerHTML;
+        }},
+        { name: 'Alex — Obsolete SKUs', color: '#7E57C2', content: () => {
+            const card = document.querySelectorAll('.team-card')[2];
+            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#7E57C2">Alex</div><div class="meeting-owner-role">Obsolete SKUs, BOM Verification & Duplicates</div></div>` + card.innerHTML;
+        }},
+        { name: 'Carlos & Lidia — Suppliers + Warehouse', color: '#FFA726', content: () => {
+            const carlos = document.querySelectorAll('.team-card')[3];
+            const lidia = document.querySelectorAll('.team-card')[4];
+            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#FFA726">Carlos & Lidia</div><div class="meeting-owner-role">Supplier Management + Warehouse Operations</div></div><div class="team-grid">` +
+                `<div class="team-card" style="border-left-color:#FFA726">${carlos.innerHTML}</div>` +
+                `<div class="team-card" style="border-left-color:#F9A825">${lidia.innerHTML}</div></div>`;
+        }},
+        { name: 'Alberto — Production', color: '#00B2A9', content: () => {
+            const card = document.querySelectorAll('.team-card')[5];
+            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#00B2A9">Alberto</div><div class="meeting-owner-role">Production Manager</div></div>` + card.innerHTML;
+        }},
+        { name: 'Rigo — Controls & Kits', color: '#00A3E1', content: () => {
+            const card = document.querySelectorAll('.team-card')[0];
+            const kits = document.getElementById('kits').innerHTML;
+            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#00A3E1">Rigo</div><div class="meeting-owner-role">Meeting Leader & Inventory Controls</div></div>` + card.innerHTML + `<div style="margin-top:32px">${kits}</div>`;
+        }},
+        { name: 'Picking Implementation', color: 'var(--beam)', content: () => document.getElementById('picking').innerHTML },
+        { name: 'Miguel — App & Next Steps', color: '#42A5F5', content: () => {
+            const card = document.querySelectorAll('.team-card')[6];
+            return `<div class="meeting-owner-header"><div class="meeting-owner-name" style="color:#42A5F5">Miguel</div><div class="meeting-owner-role">App Development & Picking Implementation</div></div>` + card.innerHTML;
+        }}
+    ];
+    let meetingIdx = 0;
+
+    function startMeeting() {
+        meetingIdx = 0;
+        document.getElementById('meetingOverlay').classList.add('active');
+        renderMeetingStep();
+    }
+    function exitMeeting() {
+        document.getElementById('meetingOverlay').classList.remove('active');
+    }
+    function meetingPrev() { if (meetingIdx > 0) { meetingIdx--; renderMeetingStep(); } }
+    function meetingNext() {
+        if (meetingIdx < meetingSteps.length - 1) { meetingIdx++; renderMeetingStep(); }
+        else exitMeeting();
+    }
+    function renderMeetingStep() {
+        const step = meetingSteps[meetingIdx];
+        document.getElementById('meetingContent').innerHTML = step.content();
+        document.getElementById('meetingStep').textContent = `${meetingIdx + 1} / ${meetingSteps.length}`;
+        document.getElementById('meetingStepName').textContent = step.name;
+        document.getElementById('meetingContent').scrollTop = 0;
+        window.scrollTo(0, 0);
+    }
+    document.addEventListener('keydown', e => {
+        if (!document.getElementById('meetingOverlay').classList.contains('active')) return;
+        if (e.key === 'Escape') exitMeeting();
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); meetingNext(); }
+        if (e.key === 'ArrowLeft') meetingPrev();
+    });
     </script>
 </body>
 </html>
