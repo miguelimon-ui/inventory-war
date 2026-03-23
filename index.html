@@ -1000,14 +1000,13 @@
             ? `<table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead><tbody>${
                 owner.weekly.map(w => `<tr><td>${w.metric}</td><td>${w.this_week || '—'}</td><td>${w.last_week || '—'}</td><td>${w.trend || '—'}</td></tr>`).join('')
             }</tbody></table>` : '';
+        const statusInfo = { pending: { icon: '☐', badge: 'PENDING', cls: 'status-pending', liCls: '' }, active: { icon: '▶', badge: 'ACTIVE', cls: 'status-active', liCls: '' }, alert: { icon: '⚠', badge: 'ALERT', cls: 'status-alert', liCls: 'urgent' }, done: { icon: '✓', badge: 'DONE', cls: 'status-active', liCls: 'done' } };
         const actionsHtml = owner.actions.map((a, ai) => {
-            const isDone = a.status === 'done';
-            const isAlert = a.status === 'alert';
-            const cls = isDone ? 'done action-clickable' : (isAlert ? 'urgent action-clickable' : 'action-clickable');
-            const icon = isDone ? '<span class="check">✓</span>' : '<span class="uncheck">☐</span>';
-            return `<li class="${cls}" onclick="toggleAction(${idx},${ai})">
-                ${icon} ${a.title}${a.blocker ? ` <span style="font-size:10px;color:var(--text-muted);">[blocked: ${a.blocker}]</span>` : ''}
-                <span class="action-delete" onclick="event.stopPropagation();deleteAction(${idx},${ai})">×</span>
+            const si = statusInfo[a.status] || statusInfo.pending;
+            return `<li class="${si.liCls}" style="display:flex;align-items:center;gap:8px;">
+                <span class="status-badge ${si.cls} action-clickable" onclick="toggleAction(${idx},${ai})" title="Click to change status: pending → active → alert → done">${si.badge}</span>
+                <span style="flex:1;">${a.title}${a.blocker ? ` <span style="font-size:10px;color:var(--text-muted);">[blocked: ${a.blocker}]</span>` : ''}${a.root_cause ? ` <span style="font-size:10px;color:var(--beam);">${a.root_cause}</span>` : ''}</span>
+                <span class="action-delete" onclick="deleteAction(${idx},${ai})">×</span>
             </li>`;
         }).join('');
 
@@ -1051,12 +1050,11 @@
         }
     }
 
+    const statusCycle = ['pending', 'active', 'alert', 'done'];
     async function toggleAction(ownerIdx, actionIdx) {
         const a = ownersData[ownerIdx].actions[actionIdx];
-        if (a.status === 'done') a.status = 'pending';
-        else if (a.status === 'alert') a.status = 'done';
-        else if (a.status === 'active') a.status = 'done';
-        else a.status = 'active';
+        const cur = statusCycle.indexOf(a.status);
+        a.status = statusCycle[(cur + 1) % statusCycle.length];
         renderTeamGrid();
         await apiPut('owners', ownersData);
     }
