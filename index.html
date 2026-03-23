@@ -293,7 +293,6 @@
 
     <div class="nav">
         <button class="nav-btn active" onclick="showSection('overview')">Executive Summary</button>
-        <button class="nav-btn" onclick="showSection('rootcauses')">Root Causes</button>
         <button class="nav-btn" onclick="showSection('pareto')">Pareto Detail</button>
         <button class="nav-btn" onclick="showSection('trends')">Weekly Trends</button>
         <button class="nav-btn" onclick="showSection('picking')">Picking</button>
@@ -335,8 +334,8 @@
             </div>
 
             <div class="card">
-                <div class="card-title">Breakdown by Root Cause</div>
-                <div id="overviewBars"></div>
+                <div class="card-title">Breakdown by Root Cause — Click to expand</div>
+                <div class="rc-list" id="rcList"></div>
             </div>
 
             <div class="card">
@@ -355,14 +354,6 @@
                         <span> — Dropped from 20 to 1. Verification Gap is responding to the cycle count program.</span>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- LEVEL 2: Root Causes -->
-        <div id="rootcauses" class="section">
-            <div class="card">
-                <div class="card-title">Systemic Root Causes — $344K Total</div>
-                <div class="rc-list" id="rcList"></div>
             </div>
         </div>
 
@@ -622,19 +613,8 @@
     // ===== RENDER =====
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Overview bars
+    // Root causes — expandable inline in overview
     const totalAmount = rootCauses.reduce((s, rc) => s + rc.amount, 0);
-    document.getElementById('overviewBars').innerHTML = rootCauses.map(rc => {
-        const pct = (rc.amount / totalAmount * 100).toFixed(1);
-        return `<div class="pareto-bar-row">
-            <div class="pareto-label" style="color: ${rc.color}; font-weight: 500;">${rc.name}</div>
-            <div class="pareto-bar-wrapper"><div class="pareto-bar-fill" style="width: ${pct}%; background: ${rc.color}"></div></div>
-            <div class="pareto-value">$${(rc.amount/1000).toFixed(0)}K</div>
-            <div class="pareto-cumul">${pct}%</div>
-        </div>`;
-    }).join('');
-
-    // Root causes detail
     document.getElementById('rcList').innerHTML = rootCauses.map((rc, idx) => {
         const pct = (rc.amount / totalAmount * 100).toFixed(1);
         const actionsHtml = rc.actions.map(a => `<tr class="action-row" data-status="${a.status}">
