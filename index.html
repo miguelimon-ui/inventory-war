@@ -380,6 +380,17 @@
 
         <!-- Trends -->
         <div id="trends" class="section">
+            <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div class="card-title" style="margin-bottom:4px;">Weekly Trends — Leading Indicators</div>
+                    <p style="color:var(--text-muted);font-size:12px;margin:0;">Upload the Short PID Review Excel to auto-update all trends.</p>
+                </div>
+                <label style="padding:8px 16px;border:1px solid var(--beam);background:transparent;color:var(--beam);cursor:pointer;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;text-transform:uppercase;letter-spacing:0.05em;">
+                    Upload Excel
+                    <input type="file" accept=".xlsx,.xls" onchange="handlePIDUpload(this)" style="display:none;">
+                </label>
+            </div>
+            <div id="uploadStatus" style="display:none;padding:12px;margin-bottom:12px;border-radius:6px;font-size:13px;"></div>
             <div class="card">
                 <div class="card-title">Short PID — Weekly Trend by Reason</div>
                 <div class="chart-container">
@@ -551,6 +562,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
     // ===== DATA =====
     // paretoItems removed — now loaded dynamically by loadPareto()
@@ -854,6 +866,126 @@
         await apiPut('owners', ownersData);
     }
 
+    // ===== FILE UPLOAD — Short PID Review =====
+    async function handlePIDUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const statusDiv = document.getElementById('uploadStatus');
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = 'rgba(0,163,225,0.08)';
+        statusDiv.style.border = '1px solid rgba(0,163,225,0.2)';
+        statusDiv.style.color = 'var(--beam)';
+        statusDiv.textContent = 'Reading Excel...';
+
+        try {
+            const data = await file.arrayBuffer();
+            const wb = XLSX.read(data);
+
+            // Find Summary sheet
+            const summarySheet = wb.Sheets['Summary'];
+            if (!summarySheet) { showUploadError('No "Summary" sheet found in Excel'); return; }
+
+            const rows = XLSX.utils.sheet_to_json(summarySheet, { header: 1 });
+
+            // Find header row (has "Reason" and week columns)
+            let headerIdx = -1;
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i] && String(rows[i][0]).includes('Reason')) { headerIdx = i; break; }
+            }
+            if (headerIdx < 0) { showUploadError('Could not find header row with "Reason"'); return; }
+
+            const headers = rows[headerIdx];
+            // Extract week labels (columns after "Reason", skip nulls)
+            const weekCols = [];
+            for (let c = 1; c < headers.length; c++) {
+                const h = String(headers[c] || '');
+                if (h.includes('Week of') || h.match(/\d{2}\.\d{2}/)) {
+                    const weekLabel = h.replace('Week of\r\n', '').replace('Week of ', '').trim();
+                    weekCols.push({ col: c, label: weekLabel });
+                }
+            }
+
+            // Extract data rows
+            const reasons = {};
+            for (let i = headerIdx + 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[0] || r[0] === 'Total') continue;
+                const reason = String(r[0]).trim();
+                if (reason === 'Resolved' || reason === 'Total' || !reason) continue;
+                reasons[reason] = weekCols.map(wc => {
+                    const v = r[wc.col];
+                    return (v === '—' || v === undefined || v === null) ? 0 : Number(v) || 0;
+                });
+            }
+
+            const weeks = weekCols.map(wc => wc.label);
+            const latestWeek = weeks[weeks.length - 1];
+
+            // Map reasons to leading indicators in root_causes
+            const indicatorMap = {
+                'Trufig': { rc: 'process', sub: 'pid_flow', indicator: 'Trufig Short PIDs' },
+                'PID Requested': { rc: 'process', sub: 'pid_flow', indicator: 'PID Requested' },
+                'WIP Error': { rc: 'process', sub: 'pid_flow', indicator: 'WIP Error' },
+                'Adj Requested': { rc: 'transactions', sub: 'adjustments', indicator: 'Adj Requested' },
+                'Count Requested': { rc: 'data', sub: 'sku_selection', indicator: 'Count Requested' },
+                'Incorrect BOM': { rc: 'process', sub: 'known_issues', indicator: 'Incorrect BOM' },
+                'Transfer Needed': { rc: 'execution', sub: 'pallet_labeling', indicator: 'Transfer Needed' },
+            };
+
+            // Update root_causes data
+            let updated = 0;
+            for (const [reason, values] of Object.entries(reasons)) {
+                const mapping = indicatorMap[reason];
+                if (!mapping) continue;
+                const rc = rootCausesData.find(r => r.id === mapping.rc);
+                if (!rc) continue;
+                const sub = (rc.sub_causes || []).find(s => s.id === mapping.sub);
+                if (!sub) continue;
+                const li = (sub.leading_indicators || []).find(l => l.name === mapping.indicator);
+                if (!li) continue;
+
+                li.weeks = weeks;
+                li.data = values;
+                if (li.direction === 'monitor') { /* keep monitored status, just update data */ }
+                else {
+                    const last = values[values.length - 1];
+                    const prev = values.length > 1 ? values[values.length - 2] : last;
+                    if (last === 0 && li.goal === 0) li.status = 'controlled';
+                    else if (last > prev * 1.1) li.status = li.direction === 'down' ? 'worse' : 'controlled';
+                    else if (li.goal !== null && last <= li.goal) li.status = 'controlled';
+                    else if (last < prev) li.status = 'controlled';
+                    else li.status = 'volatile';
+                }
+                updated++;
+            }
+
+            // Save to API
+            if (!isLocal) await apiPut('root_causes', rootCausesData);
+
+            // Re-render
+            renderOverview();
+            renderActions();
+
+            statusDiv.style.background = 'rgba(46,125,50,0.08)';
+            statusDiv.style.border = '1px solid rgba(46,125,50,0.2)';
+            statusDiv.style.color = '#4CAF50';
+            statusDiv.textContent = `Updated ${updated} indicators from ${Object.keys(reasons).length} reasons. Latest week: ${latestWeek}. ${Object.keys(reasons).map(r => r + ': ' + reasons[r][reasons[r].length-1]).join(', ')}`;
+
+        } catch(e) {
+            showUploadError('Error parsing Excel: ' + e.message);
+        }
+        input.value = '';
+    }
+
+    function showUploadError(msg) {
+        const statusDiv = document.getElementById('uploadStatus');
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = 'rgba(198,40,40,0.08)';
+        statusDiv.style.border = '1px solid rgba(198,40,40,0.2)';
+        statusDiv.style.color = '#EF5350';
+        statusDiv.textContent = msg;
+    }
+
     let lastAISuggestion = {};
     async function suggestSMART(idx) {
         const title = document.getElementById(`form-title-${idx}`).value.trim();
@@ -1089,6 +1221,7 @@
         if (status === 'worse') return '#EF5350';
         if (status === 'rising') return '#F57C00';
         if (status === 'volatile') return '#F9A825';
+        if (status === 'monitored') return 'var(--beam)';
         if (status === 'new_tracking') return 'var(--text-muted)';
         return 'var(--text-muted)';
     }
@@ -1098,6 +1231,7 @@
         if (status === 'worse') return '\u2191 GETTING WORSE';
         if (status === 'rising') return '\u2191 RISING';
         if (status === 'volatile') return '~ VOLATILE';
+        if (status === 'monitored') return '\u25C9 MONITORING';
         if (status === 'new_tracking') return '\u25CB NEW TRACKING';
         return status;
     }
