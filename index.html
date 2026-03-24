@@ -900,8 +900,10 @@
 
         const container = document.getElementById('pickingGantt');
         // Find date range
-        const dates = data.filter(t => t.start).map(t => new Date(t.start));
-        const endDates = data.filter(t => t.end).map(t => new Date(t.end));
+        const validTasks = data.filter(t => t.start && t.end);
+        if (!validTasks.length) return;
+        const dates = validTasks.map(t => new Date(t.start));
+        const endDates = validTasks.map(t => new Date(t.end));
         const minDate = new Date(Math.min(...dates));
         const maxDate = new Date(Math.max(...endDates));
         const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
@@ -924,9 +926,12 @@
                 html += `<div class="gantt-phase-label">${task.phase}</div>`;
                 lastPhase = task.phase;
             }
-            if (!task.start) return;
+            if (!task.start || !task.end) {
+                html += `<div class="gantt-row"><div class="gantt-row-label"><span style="flex:1;">${task.name}</span><span class="dep-tag">${task.owner}</span></div><div class="gantt-row-bars"><span style="font-size:11px;color:var(--text-muted);padding:4px;">Ongoing</span></div></div>`;
+                return;
+            }
             const startDay = Math.ceil((new Date(task.start) - minDate) / 86400000);
-            const dur = task.end ? Math.ceil((new Date(task.end) - new Date(task.start)) / 86400000) + 1 : 1;
+            const dur = Math.ceil((new Date(task.end) - new Date(task.start)) / 86400000) + 1;
             const leftPct = (startDay / totalDays * 100).toFixed(2);
             const widthPct = (dur / totalDays * 100).toFixed(2);
             const statusIcon = task.status === 'Done' ? '✓ ' : task.blocker ? '⚠ ' : '';
