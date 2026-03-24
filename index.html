@@ -808,9 +808,14 @@
                     <input type="text" id="form-target-${idx}" placeholder="Target" style="width:80px;">
                 </div>
                 <input type="text" id="form-blocker-${idx}" placeholder="Blocker (optional)">
-                <div id="form-ai-${idx}" style="display:none;padding:8px;background:rgba(0,163,225,0.1);border-radius:4px;font-size:12px;color:var(--beam);margin-bottom:8px;"></div>
+                <div id="form-ai-${idx}" style="display:none;padding:10px;background:rgba(0,163,225,0.08);border:1px solid rgba(0,163,225,0.2);border-radius:4px;font-size:12px;margin-bottom:8px;">
+                    <div style="font-size:10px;color:var(--beam);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">AI Suggestion</div>
+                    <div id="form-ai-text-${idx}" style="color:var(--text-secondary);"></div>
+                    <button onclick="applyAISuggestion(${idx})" style="margin-top:6px;padding:4px 12px;background:var(--beam);border:none;color:white;border-radius:3px;font-size:11px;font-family:inherit;cursor:pointer;">Apply</button>
+                </div>
                 <div class="action-form-btns">
                     <button class="btn-save" onclick="saveAction(${idx})">Save</button>
+                    <button onclick="suggestSMART(${idx})" style="padding:6px 16px;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--beam);background:transparent;color:var(--beam);text-transform:uppercase;letter-spacing:0.05em;">AI Suggest</button>
                     <button class="btn-cancel" onclick="hideAddForm(${idx})">Cancel</button>
                 </div>
             </div>
@@ -847,6 +852,38 @@
         ownersData[ownerIdx].actions.splice(actionIdx, 1);
         renderTeamGrid();
         await apiPut('owners', ownersData);
+    }
+
+    let lastAISuggestion = {};
+    async function suggestSMART(idx) {
+        const title = document.getElementById(`form-title-${idx}`).value.trim();
+        const rc = document.getElementById(`form-rc-${idx}`);
+        const rcText = rc.options[rc.selectedIndex]?.text || '';
+        const kpi = document.getElementById(`form-kpi-${idx}`)?.value.trim() || '';
+        if (!title) { document.getElementById(`form-title-${idx}`).style.borderColor='#EF5350'; return; }
+        const aiDiv = document.getElementById(`form-ai-${idx}`);
+        const aiText = document.getElementById(`form-ai-text-${idx}`);
+        aiDiv.style.display = 'block';
+        aiText.innerHTML = '<span style="color:var(--text-muted);">Thinking...</span>';
+        try {
+            const r = await fetch('/api/smart-suggest', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ title, root_cause: rcText, kpi })
+            });
+            const data = await r.json();
+            if (data.error) { aiText.innerHTML = '<span style="color:#EF5350;">Error: ' + data.error.substring(0,100) + '</span>'; return; }
+            lastAISuggestion[idx] = data;
+            aiText.innerHTML = `<strong>SMART:</strong> ${data.smart_title}<br>${data.suggested_kpi ? '<strong>KPI:</strong> ' + data.suggested_kpi + '<br>' : ''}<span style="color:var(--text-muted);">${data.reasoning}</span>`;
+        } catch(e) {
+            aiText.innerHTML = '<span style="color:#EF5350;">Could not reach AI service</span>';
+        }
+    }
+    function applyAISuggestion(idx) {
+        const s = lastAISuggestion[idx];
+        if (!s) return;
+        if (s.smart_title) document.getElementById(`form-title-${idx}`).value = s.smart_title;
+        if (s.suggested_kpi && !document.getElementById(`form-kpi-${idx}`).value) document.getElementById(`form-kpi-${idx}`).value = s.suggested_kpi;
+        document.getElementById(`form-ai-${idx}`).style.display = 'none';
     }
 
     function populateRCDropdown(select) {

@@ -9,3 +9,8 @@
   from = "/api/data"
   to = "/.netlify/functions/data"
   status = 200
+
+[[redirects]]
+  from = "/api/smart-suggest"
+  to = "/.netlify/functions/smart-suggest"
+  status = 200
