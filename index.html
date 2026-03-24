@@ -892,6 +892,19 @@
         });
     }
 
+    // ===== API =====
+    const API = '/.netlify/functions/data';
+    let ownersData = [];
+
+    async function apiGet(key) {
+        const r = await fetch(`${API}?key=${key}`);
+        if (!r.ok) return null;
+        return r.json();
+    }
+    async function apiPut(key, data) {
+        await fetch(`${API}?key=${key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    }
+
     // ===== PICKING GANTT (DYNAMIC) =====
 
     async function loadGantt() {
@@ -955,19 +968,7 @@
     }
     loadGantt();
 
-    // ===== API & DYNAMIC DATA =====
-    const API = '/.netlify/functions/data';
-    let ownersData = [];
-
-    async function apiGet(key) {
-        const r = await fetch(`${API}?key=${key}`);
-        if (!r.ok) return null;
-        return r.json();
-    }
-    async function apiPut(key, data) {
-        await fetch(`${API}?key=${key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    }
-
+    // ===== TEAM (DYNAMIC) =====
     function renderTeamCard(owner, idx) {
         const respHtml = owner.responsibilities.map(r => `<li>${r}</li>`).join('');
         const weeklyHtml = owner.weekly && owner.weekly.length > 0
