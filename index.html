@@ -514,6 +514,7 @@
                             <th>Status</th>
                             <th>KPI</th>
                             <th>Owner</th>
+                            <th>Support</th>
                         </tr>
                     </thead>
                     <tbody id="actionsBody"></tbody>
@@ -656,6 +657,7 @@
                         <td><span class="status-badge ${sc}">${a.status.toUpperCase()}</span></td>
                         <td>${a.kpi || '—'}</td>
                         <td>${a.owner}</td>
+                        <td>${a.support || '—'}</td>
                     </tr>`);
                 });
             });
@@ -894,6 +896,7 @@
                     <input type="text" id="form-baseline-${idx}" placeholder="Baseline" style="width:80px;">
                     <input type="text" id="form-target-${idx}" placeholder="Target" style="width:80px;">
                 </div>
+                <input type="text" id="form-support-${idx}" placeholder="Support / Facilitator (optional)">
                 <input type="text" id="form-blocker-${idx}" placeholder="Blocker (optional)">
                 <div id="form-ai-${idx}" style="display:none;padding:10px;background:rgba(0,163,225,0.08);border:1px solid rgba(0,163,225,0.2);border-radius:4px;font-size:12px;margin-bottom:8px;">
                     <div style="font-size:10px;color:var(--beam);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">AI Suggestion</div>
@@ -1201,6 +1204,7 @@
         document.getElementById(`form-title-${ownerIdx}`).value = a.title;
         document.getElementById(`form-status-${ownerIdx}`).value = a.status;
         document.getElementById(`form-rc-${ownerIdx}`).value = a.root_cause || '';
+        if (document.getElementById(`form-support-${ownerIdx}`)) document.getElementById(`form-support-${ownerIdx}`).value = a.support || '';
         document.getElementById(`form-blocker-${ownerIdx}`).value = a.blocker || '';
         form.classList.add('show');
         form.dataset.editIdx = actionIdx;
@@ -1217,10 +1221,11 @@
         if (!title) { document.getElementById(`form-title-${idx}`).style.borderColor='#EF5350'; return; }
         if (!kpi) { document.getElementById(`form-kpi-${idx}`).style.borderColor='#EF5350'; return; }
         const status = document.getElementById(`form-status-${idx}`).value;
+        const support = document.getElementById(`form-support-${idx}`)?.value.trim() || '';
         const blocker = document.getElementById(`form-blocker-${idx}`).value.trim();
         const form = document.getElementById(`form-${idx}`);
         const editIdx = form.dataset.editIdx;
-        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, blocker: blocker || '' };
+        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, support: support || '', blocker: blocker || '' };
         if (editIdx !== undefined && editIdx !== '') {
             ownersData[idx].actions[parseInt(editIdx)] = actionData;
             delete form.dataset.editIdx;
@@ -1494,7 +1499,7 @@
             progressHtml = `<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px;"><span>Baseline: ${a.baseline}</span><span>Current: <strong style="color:${barColor};">${a.current}</strong></span><span>Target: ${a.target}</span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${progress}%;background:${barColor};border-radius:3px;"></div></div></div>`;
         }
         return `<div style="padding:12px;background:var(--surface2);border-radius:6px;margin-bottom:8px;${a.status==='done'?'opacity:0.6;':''}">
-            <div style="display:flex;align-items:center;gap:8px;"><span class="status-badge ${s.cls}">${s.badge}</span><span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span><span class="dep-tag">${a.owner}</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span class="status-badge ${s.cls}">${s.badge}</span><span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span><span class="dep-tag">${a.owner}</span>${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}</div>
             ${a.kpi ? `<div style="margin-top:6px;font-size:11px;"><span style="color:var(--text-muted);">KPI:</span> <span style="color:${kpiColor};font-weight:500;">${a.kpi}</span></div>` : ''}
             ${progressHtml}
         </div>`;
