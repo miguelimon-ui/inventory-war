@@ -298,6 +298,7 @@
         .team-actions li { padding: 6px 0; border-bottom: 1px solid var(--border); }
         .team-actions li:last-child { border-bottom: none; }
         .team-actions .done { text-decoration: line-through; color: var(--text-muted); }
+        .team-actions.collapsed, .collapsed { display: none; }
         .team-actions .urgent { color: #EF5350; font-weight: 600; }
         .check { color: #4CAF50; margin-right: 6px; }
         .uncheck { color: var(--text-muted); margin-right: 6px; }
@@ -382,6 +383,21 @@
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" id="rootCauseCards"></div>
             <div id="expandPanel"></div>
             <div id="rcDetail" style="display:none;"></div>
+            <!-- 5 Whys Panel -->
+            <div id="fiveWhysPanel" style="display:none;margin-top:16px;">
+                <div class="card" style="border-left:4px solid var(--beam);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div class="card-title" style="margin-bottom:0;">5 Whys — Root Cause Analysis</div>
+                        <button onclick="document.getElementById('fiveWhysPanel').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;">×</button>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <input type="text" id="fiveWhysProblem" placeholder="What's the problem? (e.g., MISC.MAGNET.CUP shows 623 in PS but only 3 physical)" style="width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;">
+                        <button onclick="startFiveWhys()" style="margin-top:8px;padding:8px 20px;background:var(--beam);border:none;color:white;border-radius:4px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">Start Analysis</button>
+                    </div>
+                    <div id="fiveWhysThread" style="margin-top:16px;"></div>
+                    <div id="fiveWhysResult" style="display:none;margin-top:16px;padding:16px;background:rgba(76,175,80,0.08);border:1px solid rgba(76,175,80,0.2);border-radius:6px;"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Pareto Detail -->
@@ -542,13 +558,15 @@
         <div id="bomreviews" class="section">
             <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
                 <div>
-                    <div class="card-title" style="margin-bottom:4px;">BOM Reviews — Asana Integration</div>
-                    <p style="color:var(--text-muted);font-size:12px;margin:0;">Tasks synced from Asana project: Master Data/IT Minden Tasks</p>
+                    <div class="card-title" style="margin-bottom:4px;">BOM Reviews — All Actions</div>
+                    <p style="color:var(--text-muted);font-size:12px;margin:0;">All BOM review actions from inventory app + Asana tasks</p>
                 </div>
-                <button onclick="loadBOMReviews()" style="padding:8px 16px;border:1px solid var(--beam);background:transparent;color:var(--beam);cursor:pointer;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;text-transform:uppercase;letter-spacing:0.05em;">Refresh from Asana</button>
+                <button onclick="loadBOMReviews()" style="padding:8px 16px;border:1px solid var(--beam);background:transparent;color:var(--beam);cursor:pointer;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;text-transform:uppercase;letter-spacing:0.05em;">Refresh</button>
             </div>
-            <div id="bomReviewsList" style="margin-top:12px;">
-                <div style="color:var(--text-muted);padding:40px;text-align:center;">Click "Refresh from Asana" to load BOM Review tasks</div>
+            <div id="bomLocalActions" style="margin-top:12px;"></div>
+            <div class="card-title" style="margin-top:20px;margin-bottom:8px;">Asana — Master Data/IT Minden Tasks</div>
+            <div id="bomReviewsList">
+                <div style="color:var(--text-muted);padding:20px;text-align:center;font-size:12px;">Click Refresh to load Asana tasks</div>
             </div>
         </div>
 
@@ -882,15 +900,19 @@
                 owner.weekly.map(w => `<tr><td>${w.metric}</td><td>${w.this_week || '—'}</td><td>${w.last_week || '—'}</td><td>${w.trend || '—'}</td></tr>`).join('')
             }</tbody></table>` : '';
         const statusInfo = { pending: { icon: '☐', badge: 'PENDING', cls: 'status-pending', liCls: '' }, active: { icon: '▶', badge: 'ACTIVE', cls: 'status-active', liCls: '' }, alert: { icon: '⚠', badge: 'ALERT', cls: 'status-alert', liCls: 'urgent' }, done: { icon: '✓', badge: 'DONE', cls: 'status-active', liCls: 'done' } };
-        const actionsHtml = owner.actions.map((a, ai) => {
+        const renderActionLi = (a, ai) => {
             const si = statusInfo[a.status] || statusInfo.pending;
             return `<li class="${si.liCls}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span class="status-badge ${si.cls} action-clickable" onclick="toggleAction(${idx},${ai})" title="Click to change status: pending → active → alert → done">${si.badge}</span>
                 <span style="flex:1;cursor:text;min-width:200px;" onclick="event.stopPropagation();editAction(${idx},${ai})" title="Click to edit">${a.title}${a.blocker ? ` <span style="font-size:10px;color:var(--text-muted);">[blocked: ${a.blocker}]</span>` : ''}${a.root_cause ? ` <span style="font-size:10px;color:var(--beam);">${a.root_cause}</span>` : ''}</span>
-                ${a.owner ? '<span class="dep-tag">'+a.owner+'</span>' : ''}${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}
+                ${a.support ? '<span class="dep-tag">'+a.support+'</span>' : ''}${a.owner ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.owner+'</span>' : ''}
                 <span class="action-delete" onclick="deleteAction(${idx},${ai})">×</span>
             </li>`;
-        }).join('');
+        };
+        const activeActions = owner.actions.map((a, ai) => ({ a, ai })).filter(x => x.a.status !== 'done');
+        const doneActions = owner.actions.map((a, ai) => ({ a, ai })).filter(x => x.a.status === 'done');
+        const actionsHtml = activeActions.map(x => renderActionLi(x.a, x.ai)).join('')
+            + (doneActions.length ? `<li style="list-style:none;padding:6px 0;border-bottom:none;"><button id="done-btn-${idx}" onclick="document.getElementById('done-list-${idx}').classList.toggle('collapsed');var v=document.getElementById('done-list-${idx}').classList.contains('collapsed');this.textContent=v?'Show ${doneActions.length} completed ▸':'Hide completed ▾';" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;font-family:inherit;padding:0;">Show ${doneActions.length} completed ▸</button></li></ul><ul class="team-actions collapsed" id="done-list-${idx}">${doneActions.map(x => renderActionLi(x.a, x.ai)).join('')}` : '');
 
         return `<div class="team-card" style="border-left-color:${owner.color};">
             <div class="team-card-header">
@@ -912,7 +934,7 @@
                     <input type="text" id="form-baseline-${idx}" placeholder="Baseline" style="width:80px;">
                     <input type="text" id="form-target-${idx}" placeholder="Target" style="width:80px;">
                 </div>
-                <input type="text" id="form-support-${idx}" placeholder="Support / Facilitator (optional)">
+                <input type="text" id="form-support-${idx}" placeholder="Owner (who in production is responsible?)">
                 <input type="text" id="form-blocker-${idx}" placeholder="Blocker (optional)">
                 <div id="form-asana-${idx}" style="display:none;padding:10px;background:rgba(0,163,225,0.05);border:1px solid rgba(0,163,225,0.15);border-radius:4px;margin-top:4px;">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--beam);">
@@ -1506,6 +1528,11 @@
             <div class="kpi"><div class="kpi-label">Actions</div><div class="kpi-value green">${doneActions}/${totalActions}</div><div class="kpi-sub">completed</div></div>
             <div class="kpi"><div class="kpi-label">Controlled</div><div class="kpi-value green">${controlledCount}</div><div class="kpi-sub">indicators trending right</div></div>
             <div class="kpi"><div class="kpi-label">Alerts</div><div class="kpi-value ${alertCount > 0 ? 'red' : 'green'}">${alertCount}</div><div class="kpi-sub">need attention</div></div>
+            <div class="kpi" style="cursor:pointer;border:1px solid var(--beam);" onclick="document.getElementById('fiveWhysPanel').style.display='block';document.getElementById('fiveWhysProblem').focus();">
+                <div class="kpi-label" style="color:var(--beam);">Root Cause Analysis</div>
+                <div class="kpi-value accent" style="font-size:24px;">5 Whys</div>
+                <div class="kpi-sub">AI-powered analysis</div>
+            </div>
         `;
 
         // Level 1: 4 clean bucket cards — no sub-causes shown until click
@@ -1814,10 +1841,114 @@
         selectedRC = null;
     }
 
+    // ===== 5 WHYS ROOT CAUSE ANALYSIS =====
+    let fiveWhysData = { problem: '', whys: [] };
+
+    async function startFiveWhys() {
+        const problem = document.getElementById('fiveWhysProblem').value.trim();
+        if (!problem) return;
+        fiveWhysData = { problem, whys: [] };
+        document.getElementById('fiveWhysThread').innerHTML = '';
+        document.getElementById('fiveWhysResult').style.display = 'none';
+        await askNextWhy();
+    }
+
+    async function askNextWhy() {
+        const thread = document.getElementById('fiveWhysThread');
+        thread.innerHTML += '<div style="color:var(--text-muted);padding:8px;font-size:12px;">AI is thinking...</div>';
+
+        try {
+            const r = await fetch('/api/five-whys', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ problem: fiveWhysData.problem, whys_so_far: fiveWhysData.whys })
+            });
+            const data = await r.json();
+
+            // Remove "thinking" message
+            thread.lastChild.remove();
+
+            if (data.root_cause) {
+                // Final result
+                document.getElementById('fiveWhysResult').style.display = 'block';
+                document.getElementById('fiveWhysResult').innerHTML = `
+                    <div style="font-size:10px;color:#4CAF50;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;">Root Cause Identified</div>
+                    <div style="font-size:16px;font-weight:600;margin-bottom:8px;">${data.root_cause}</div>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">${data.reasoning}</div>
+                    <div style="padding:12px;background:var(--surface2);border-radius:4px;">
+                        <div style="font-size:11px;color:var(--beam);font-weight:600;margin-bottom:4px;">Suggested Action</div>
+                        <div style="font-size:13px;">${data.suggested_action}</div>
+                        <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">KPI: ${data.kpi} | Confidence: ${data.confidence}</div>
+                    </div>`;
+            } else {
+                // Next Why question
+                const whyNum = data.why_number || fiveWhysData.whys.length + 1;
+                const depthColors = { surface: '#EF5350', getting_closer: '#FFA726', almost_there: '#4CAF50' };
+                const depthColor = depthColors[data.depth_assessment] || 'var(--text-muted)';
+
+                thread.innerHTML += `<div style="margin-bottom:12px;padding:12px;background:var(--surface2);border-radius:6px;border-left:3px solid var(--beam);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:12px;font-weight:600;color:var(--beam);">Why #${whyNum}</div>
+                        <span style="font-size:10px;color:${depthColor};font-weight:600;">${(data.depth_assessment||'').replace('_',' ').toUpperCase()}</span>
+                    </div>
+                    <div style="font-size:14px;font-weight:500;margin-top:6px;">${data.question}</div>
+                    ${data.hint ? '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;font-style:italic;">Hint: '+data.hint+'</div>' : ''}
+                    <div style="margin-top:8px;">
+                        <input type="text" id="why-answer-${whyNum}" placeholder="Your answer..." style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;box-sizing:border-box;" onkeydown="if(event.key==='Enter')submitWhyAnswer(${whyNum},'${data.question.replace(/'/g,"\\'")}')">
+                        <button onclick="submitWhyAnswer(${whyNum},'${data.question.replace(/'/g,"\\'")}')" style="margin-top:4px;padding:6px 16px;background:var(--beam);border:none;color:white;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;">Answer & Continue</button>
+                    </div>
+                </div>`;
+
+                document.getElementById(`why-answer-${whyNum}`).focus();
+            }
+        } catch(e) {
+            thread.lastChild.remove();
+            thread.innerHTML += '<div style="color:#EF5350;padding:8px;font-size:12px;">Error: ' + e.message + '</div>';
+        }
+    }
+
+    async function submitWhyAnswer(whyNum, question) {
+        const answer = document.getElementById(`why-answer-${whyNum}`).value.trim();
+        if (!answer) return;
+        fiveWhysData.whys.push({ question, answer });
+        // Disable the input
+        document.getElementById(`why-answer-${whyNum}`).disabled = true;
+        document.getElementById(`why-answer-${whyNum}`).style.opacity = '0.6';
+        await askNextWhy();
+    }
+
     loadRootCauses();
 
     // ===== BOM REVIEWS — Asana Integration =====
     async function loadBOMReviews() {
+        // Local BOM actions from root_causes
+        const localContainer = document.getElementById('bomLocalActions');
+        if (rootCausesData.length) {
+            const dataRC = rootCausesData.find(r => r.id === 'data');
+            const bomSub = dataRC ? (dataRC.sub_causes||[]).find(s => s.id === 'bom_reviews') : null;
+            if (bomSub && bomSub.actions.length) {
+                const si = { pending:{badge:'PENDING',cls:'status-pending'}, active:{badge:'ACTIVE',cls:'status-active'}, alert:{badge:'ALERT',cls:'status-alert'}, done:{badge:'DONE',cls:'status-active'} };
+                const renderBomCard = a => {
+                    const s = si[a.status] || si.pending;
+                    return `<div class="card" style="margin-bottom:8px;border-left:3px solid #7E57C2;${a.status==='done'?'opacity:0.6;':''}">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="status-badge ${s.cls}">${s.badge}</span>
+                            <span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span>
+                            ${a.owner ? '<span class="dep-tag">'+a.owner+'</span>' : ''}
+                            ${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}
+                        </div>
+                        ${a.kpi ? '<div style="margin-top:6px;font-size:11px;color:var(--text-muted);">KPI: '+a.kpi+'</div>' : ''}
+                    </div>`;
+                };
+                const active = bomSub.actions.filter(a => a.status !== 'done');
+                const done = bomSub.actions.filter(a => a.status === 'done');
+                localContainer.innerHTML = active.map(renderBomCard).join('')
+                    + (done.length ? `<button onclick="document.getElementById('bom-done-local').classList.toggle('collapsed');this.textContent=document.getElementById('bom-done-local').classList.contains('collapsed')?'Show ${done.length} completed ▸':'Hide completed ▾'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;font-family:inherit;padding:8px 0;">Show ${done.length} completed ▸</button><div id="bom-done-local" class="collapsed">${done.map(renderBomCard).join('')}</div>` : '');
+            } else {
+                localContainer.innerHTML = '<div style="color:var(--text-muted);padding:12px;font-size:12px;">No BOM review actions yet — add one from Team tab with root cause "Data → BOM Reviews"</div>';
+            }
+        }
+
+        // Asana tasks
         const container = document.getElementById('bomReviewsList');
         container.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center;">Loading from Asana...</div>';
         try {

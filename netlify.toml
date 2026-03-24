@@ -24,3 +24,8 @@
   from = "/api/asana-tasks"
   to = "/.netlify/functions/asana-tasks"
   status = 200
+
+[[redirects]]
+  from = "/api/five-whys"
+  to = "/.netlify/functions/five-whys"
+  status = 200

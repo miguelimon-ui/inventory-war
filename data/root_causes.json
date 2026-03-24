@@ -104,7 +104,8 @@
           { "title": "Add item costs to deactivation list", "owner": "Alex", "status": "done", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": null },
           { "title": "Capture deactivation in NPD process", "owner": "Alex", "status": "done", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": null },
           { "title": "Push for PPX cabinetry creation", "owner": "Rigo", "status": "pending", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": null },
-          { "title": "Wedge cabinet BOM proposal", "owner": "Rigo", "status": "pending", "kpi": "BOMs Verified", "baseline": null, "current": null, "target": null }
+          { "title": "Wedge cabinet BOM proposal", "owner": "Rigo", "status": "pending", "kpi": "BOMs Verified", "baseline": null, "current": null, "target": null },
+          { "title": "MISC.MAGNET.CUP — Compare physical consumption vs BOM in PeopleSoft, flag disconnections and correct BOM", "owner": "Juan Ruedas", "support": "Rigo Lopez", "status": "active", "kpi": "BOMs Verified", "baseline": null, "current": null, "target": null }
         ]
       },
       {

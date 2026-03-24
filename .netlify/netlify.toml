@@ -51,3 +51,27 @@ force = false
 [redirects.conditions]
 
 [redirects.headers]
+
+[[redirects]]
+from = "/api/asana-task"
+to = "/.netlify/functions/asana-task"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/api/asana-tasks"
+to = "/.netlify/functions/asana-tasks"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
