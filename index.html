@@ -895,14 +895,21 @@
             if (headerIdx < 0) { showUploadError('Could not find header row with "Reason"'); return; }
 
             const headers = rows[headerIdx];
-            // Extract week labels (columns after "Reason", skip nulls)
+            // Find data columns: after "Reason", take consecutive columns until null/empty
+            // Use a sample data row to find where numbers stop
+            const sampleRow = rows[headerIdx + 1] || [];
             const weekCols = [];
-            for (let c = 1; c < headers.length; c++) {
+            for (let c = 1; c < sampleRow.length; c++) {
+                const val = sampleRow[c];
+                if (val === null || val === undefined || val === '') break; // hit the gap between data and % change
                 const h = String(headers[c] || '');
+                let weekLabel;
                 if (h.includes('Week of') || h.match(/\d{2}\.\d{2}/)) {
-                    const weekLabel = h.replace('Week of\r\n', '').replace('Week of ', '').trim();
-                    weekCols.push({ col: c, label: weekLabel });
+                    weekLabel = h.replace(/Week of\r?\n?/g, '').replace('Week of ', '').trim();
+                } else {
+                    weekLabel = 'W' + c; // fallback label for columns without header
                 }
+                weekCols.push({ col: c, label: weekLabel });
             }
 
             // Extract data rows
@@ -969,7 +976,8 @@
             statusDiv.style.background = 'rgba(46,125,50,0.08)';
             statusDiv.style.border = '1px solid rgba(46,125,50,0.2)';
             statusDiv.style.color = '#4CAF50';
-            statusDiv.textContent = `Updated ${updated} indicators from ${Object.keys(reasons).length} reasons. Latest week: ${latestWeek}. ${Object.keys(reasons).map(r => r + ': ' + reasons[r][reasons[r].length-1]).join(', ')}`;
+            const summary = Object.entries(reasons).map(([r, vals]) => r + ': ' + vals[vals.length-1]).join(', ');
+            statusDiv.textContent = `Updated ${updated} indicators from ${Object.keys(reasons).length} reasons (${weeks.length} weeks). Latest: ${latestWeek}. ${summary}`;
 
         } catch(e) {
             showUploadError('Error parsing Excel: ' + e.message);
