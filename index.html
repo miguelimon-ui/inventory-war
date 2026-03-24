@@ -489,12 +489,12 @@
                 </p>
                 <div class="gantt" id="pickingGantt"></div>
                 <div class="gantt-legend">
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #EF5350;"></div> Phase 1 — BLOCKER</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #7E57C2;"></div> Phase 2A — Issue to Kit</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #EF5350;"></div> Phase 1 — Fixed Pick Locations</div>
                     <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #FFA726;"></div> Phase 2B — Finance</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00B2A9;"></div> Phase 3 — Material Move</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00A3E1;"></div> Phase 4 — Picking App</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #4CAF50;"></div> Phase 5 — Ongoing</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #7E57C2;"></div> Phase 2A — Issue to Kit</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00B2A9;"></div> Phase 3 — Roll out</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #4CAF50;"></div> Maintaining</div>
+                    <div class="gantt-legend-item"><div style="width:12px;height:8px;border:2px solid #EF5350;border-radius:2px;"></div> Critical Path</div>
                 </div>
                 <div style="margin-top:8px;font-size:11px;color:var(--text-muted);" id="ganttSource"></div>
             </div>
@@ -933,11 +933,11 @@
         weeks.forEach(w => { html += `<div class="gantt-week">${w}</div>`; });
         html += '</div></div>';
 
-        let lastPhase = '';
+        let lastGroup = '';
         data.forEach(task => {
-            if (task.phase !== lastPhase) {
-                html += `<div class="gantt-phase-label">${task.phase}</div>`;
-                lastPhase = task.phase;
+            if (task.group !== lastGroup) {
+                html += `<div class="gantt-phase-label">${task.group}</div>`;
+                lastGroup = task.group;
             }
             if (!task.start || !task.end) {
                 html += `<div class="gantt-row"><div class="gantt-row-label"><span style="flex:1;">${task.name}</span><span class="dep-tag">${task.owner}</span></div><div class="gantt-row-bars"><span style="font-size:11px;color:var(--text-muted);padding:4px;">Ongoing</span></div></div>`;
@@ -948,16 +948,18 @@
             const leftPct = (startDay / totalDays * 100).toFixed(2);
             const widthPct = (dur / totalDays * 100).toFixed(2);
             const statusIcon = task.status === 'Done' ? '✓ ' : task.blocker ? '⚠ ' : '';
-            const opacity = task.status === 'Done' ? 'opacity:0.6;' : '';
+            const opacity = task.status === 'Done' ? 'opacity:0.5;' : '';
+            const criticalBorder = task.critical ? 'border:2px solid #EF5350;' : '';
+            const barBg = task.milestone ? 'background:transparent;border:2px solid ' + task.color + ';' : 'background:' + task.color + ';';
 
-            html += `<div class="gantt-row">
+            html += `<div class="gantt-row" style="${task.critical ? 'background:rgba(239,83,80,0.05);' : ''}">
                 <div class="gantt-row-label">
-                    <span style="flex:1;">${statusIcon}${task.name}</span>
+                    <span style="flex:1;">${statusIcon}${task.name}${task.critical ? ' <span style="font-size:9px;color:#EF5350;font-weight:600;">CRITICAL</span>' : ''}</span>
                     <span class="dep-tag">${task.owner}</span>
                 </div>
                 <div class="gantt-row-bars">
-                    <div class="gantt-bar" style="left:${leftPct}%;width:${Math.max(parseFloat(widthPct), 1.5)}%;background:${task.color};${opacity}" title="${task.name}\n${task.start} → ${task.end || 'ongoing'}\nOwner: ${task.owner}">
-                        ${dur}d
+                    <div class="gantt-bar" style="left:${leftPct}%;width:${Math.max(parseFloat(widthPct), 1.5)}%;${barBg}${opacity}${criticalBorder}" title="${task.name}\n${task.start} → ${task.end}\nOwner: ${task.owner}${task.critical ? '\n★ CRITICAL PATH' : ''}">
+                        ${task.milestone ? '◆' : dur + 'd'}
                     </div>
                 </div>
             </div>`;
