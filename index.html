@@ -1000,53 +1000,67 @@
         </svg> <span style="font-size:14px;font-weight:600;color:${color};">${last}</span>`;
     }
 
+    // Helper: get all sub_causes across all main codes
+    function allSubCauses() { return rootCausesData.flatMap(rc => rc.sub_causes || []); }
+
     function renderOverview() {
       try {
-        // KPI cards
-        const totalActions = rootCausesData.reduce((s, rc) => s + rc.actions.length, 0);
-        const doneActions = rootCausesData.reduce((s, rc) => s + rc.actions.filter(a => a.status === 'done').length, 0);
-        const alertCount = rootCausesData.reduce((s, rc) => s + rc.leading_indicators.filter(li => li.status === 'worse' || li.status === 'rising').length, 0);
-        const controlledCount = rootCausesData.reduce((s, rc) => s + rc.leading_indicators.filter(li => li.status === 'controlled').length, 0);
+        const allSubs = allSubCauses();
+        const totalActions = allSubs.reduce((s, sc) => s + sc.actions.length, 0);
+        const doneActions = allSubs.reduce((s, sc) => s + sc.actions.filter(a => a.status === 'done').length, 0);
+        const allIndicators = allSubs.flatMap(sc => sc.leading_indicators || []);
+        const alertCount = allIndicators.filter(li => li.status === 'worse' || li.status === 'rising').length;
+        const controlledCount = allIndicators.filter(li => li.status === 'controlled').length;
 
         document.getElementById('overviewKpis').innerHTML = `
-            <div class="kpi"><div class="kpi-label">Root Causes</div><div class="kpi-value accent">${rootCausesData.length}</div><div class="kpi-sub">From W2W Pareto analysis</div></div>
+            <div class="kpi"><div class="kpi-label">Categories</div><div class="kpi-value accent">${rootCausesData.length}</div><div class="kpi-sub">${allSubs.length} sub-causes identified</div></div>
             <div class="kpi"><div class="kpi-label">Actions</div><div class="kpi-value green">${doneActions}/${totalActions}</div><div class="kpi-sub">completed</div></div>
-            <div class="kpi"><div class="kpi-label">Indicators Controlled</div><div class="kpi-value green">${controlledCount}</div><div class="kpi-sub">trending in right direction</div></div>
-            <div class="kpi"><div class="kpi-label">Alerts</div><div class="kpi-value ${alertCount > 0 ? 'red' : 'green'}">${alertCount}</div><div class="kpi-sub">indicators getting worse</div></div>
+            <div class="kpi"><div class="kpi-label">Controlled</div><div class="kpi-value green">${controlledCount}</div><div class="kpi-sub">indicators trending right</div></div>
+            <div class="kpi"><div class="kpi-label">Alerts</div><div class="kpi-value ${alertCount > 0 ? 'red' : 'green'}">${alertCount}</div><div class="kpi-sub">need attention</div></div>
         `;
 
-        // Root cause cards
+        // Level 1: Main code cards with sub-cause previews
+        const mainColors = { process: '#EF5350', data: '#7E57C2', transactions: '#FFA726', execution: '#00B2A9' };
         document.getElementById('rootCauseCards').innerHTML = rootCausesData.map((rc, idx) => {
-            const worstIndicator = rc.leading_indicators.reduce((worst, li) => {
-                const priority = { worse: 4, rising: 3, volatile: 2, new_tracking: 1, controlled: 0 };
-                return (priority[li.status] || 0) > (priority[worst.status] || 0) ? li : worst;
-            }, rc.leading_indicators[0]);
+            const color = mainColors[rc.id] || 'var(--beam)';
+            const subs = rc.sub_causes || [];
+            const totalAct = subs.reduce((s, sc) => s + sc.actions.length, 0);
+            const doneAct = subs.reduce((s, sc) => s + sc.actions.filter(a => a.status === 'done').length, 0);
+            const worstStatus = subs.flatMap(sc => sc.leading_indicators || []).reduce((w, li) => {
+                const p = { worse:4, rising:3, volatile:2, new_tracking:1, controlled:0 };
+                return (p[li.status]||0) > (p[w]||0) ? li.status : w;
+            }, 'controlled');
 
-            const statusColor = getStatusColor(worstIndicator ? worstIndicator.status : 'new_tracking');
-            const doneCount = rc.actions.filter(a => a.status === 'done').length;
-
-            const indicatorsHtml = rc.leading_indicators.map(li => {
-                const liColor = getStatusColor(li.status);
-                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
-                    <span style="font-size:11px;color:var(--text-muted);width:130px;">${li.name}</span>
-                    ${miniSparkline(li.data, liColor, li.goal)}
-                    <span style="font-size:10px;color:${liColor};font-weight:600;margin-left:auto;">${getStatusLabel(li.status)}</span>
+            const subsPreview = subs.map(sc => {
+                const scWorst = (sc.leading_indicators||[]).reduce((w, li) => {
+                    const p = { worse:4, rising:3, volatile:2, new_tracking:1, controlled:0 };
+                    return (p[li.status]||0) > (p[w]||0) ? li.status : w;
+                }, 'controlled');
+                const scColor = getStatusColor(scWorst);
+                const scDone = sc.actions.filter(a => a.status === 'done').length;
+                const topIndicator = (sc.leading_indicators||[]).find(li => li.data && li.data.length > 0);
+                return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+                    <span style="width:8px;height:8px;border-radius:50%;background:${scColor};flex-shrink:0;"></span>
+                    <span style="flex:1;font-size:13px;">${sc.name}</span>
+                    ${topIndicator ? miniSparkline(topIndicator.data, scColor, topIndicator.goal) : '<span style="font-size:11px;color:var(--text-muted);">New</span>'}
+                    <span style="font-size:10px;color:${scColor};font-weight:600;">${getStatusLabel(scWorst)}</span>
                 </div>`;
             }).join('');
 
-            return `<div class="card" style="cursor:pointer;border-left:4px solid ${statusColor};margin-bottom:12px;transition:all 0.2s;" onclick="showRCDetail(${idx})" onmouseover="this.style.borderColor='var(--beam)'" onmouseout="this.style.borderColor='${statusColor}'">
+            return `<div class="card" style="cursor:pointer;border-left:4px solid ${color};margin-bottom:16px;" onclick="showMainDetail(${idx})">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                     <div>
-                        <div style="font-size:16px;font-weight:600;letter-spacing:-0.01em;">${rc.short_name}</div>
-                        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${rc.description}</div>
+                        <div style="font-size:20px;font-weight:600;color:${color};letter-spacing:-0.02em;">${rc.name}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${rc.description}</div>
                     </div>
                     <div style="text-align:right;">
-                        <div style="font-size:11px;color:var(--text-muted);">W2W ref: $${(rc.lagging.w2w_impact/1000).toFixed(0)}K (${rc.lagging.pct_of_analyzed}%)</div>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${doneCount}/${rc.actions.length} actions done</div>
+                        <div style="font-size:18px;font-weight:300;color:${color};">${rc.lagging.pct_of_analyzed}%</div>
+                        <div style="font-size:11px;color:var(--text-muted);">$${(rc.lagging.w2w_impact/1000).toFixed(0)}K W2W ref</div>
+                        <div style="font-size:11px;color:var(--text-muted);">${doneAct}/${totalAct} actions</div>
                     </div>
                 </div>
-                <div style="margin-top:12px;">${indicatorsHtml}</div>
-                <div style="margin-top:8px;font-size:11px;color:var(--beam);font-weight:500;">Click to see actions \u2192</div>
+                <div style="margin-top:12px;">${subsPreview}</div>
+                <div style="margin-top:8px;font-size:11px;color:var(--beam);font-weight:500;">${subs.length} sub-causes \u2192</div>
             </div>`;
         }).join('');
       } catch(e) {
@@ -1054,83 +1068,119 @@
       }
     }
 
-    function showRCDetail(idx) {
+    function renderActionCard(a, sc) {
+        const si = { pending: {badge:'PENDING',cls:'status-pending'}, active: {badge:'ACTIVE',cls:'status-active'}, alert: {badge:'ALERT',cls:'status-alert'}, done: {badge:'DONE',cls:'status-active'} };
+        const s = si[a.status] || si.pending;
+        const kpiMatch = (sc.leading_indicators||[]).find(li => li.name === a.kpi);
+        const kpiColor = kpiMatch ? getStatusColor(kpiMatch.status) : 'var(--text-muted)';
+        let progressHtml = '';
+        if (a.baseline !== null && a.target !== null && a.current !== null) {
+            const range = Math.abs(a.baseline - a.target) || 1;
+            const progress = Math.min(100, Math.max(0, Math.abs(a.baseline - a.current) / range * 100));
+            const isRight = (a.target < a.baseline) ? (a.current <= a.baseline) : (a.current >= a.baseline);
+            const barColor = isRight ? '#4CAF50' : '#EF5350';
+            progressHtml = `<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px;"><span>Baseline: ${a.baseline}</span><span>Current: <strong style="color:${barColor};">${a.current}</strong></span><span>Target: ${a.target}</span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${progress}%;background:${barColor};border-radius:3px;"></div></div></div>`;
+        }
+        return `<div style="padding:12px;background:var(--surface2);border-radius:6px;margin-bottom:8px;${a.status==='done'?'opacity:0.6;':''}">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="status-badge ${s.cls}">${s.badge}</span><span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span><span class="dep-tag">${a.owner}</span></div>
+            ${a.kpi ? `<div style="margin-top:6px;font-size:11px;"><span style="color:var(--text-muted);">KPI:</span> <span style="color:${kpiColor};font-weight:500;">${a.kpi}</span></div>` : ''}
+            ${progressHtml}
+        </div>`;
+    }
+
+    // Level 2: Show sub-causes for a main code
+    function showMainDetail(idx) {
         selectedRC = idx;
         const rc = rootCausesData[idx];
-        const statusColor = getStatusColor(rc.leading_indicators[0]?.status || 'new_tracking');
+        const mainColors = { process: '#EF5350', data: '#7E57C2', transactions: '#FFA726', execution: '#00B2A9' };
+        const color = mainColors[rc.id] || 'var(--beam)';
+        const subs = rc.sub_causes || [];
 
-        // Leading indicators with full charts
-        const indicatorsHtml = rc.leading_indicators.map(li => {
+        const subsHtml = subs.map((sc, si) => {
+            const allLI = sc.leading_indicators || [];
+            const worstStatus = allLI.reduce((w, li) => { const p={worse:4,rising:3,volatile:2,new_tracking:1,controlled:0}; return (p[li.status]||0)>(p[w]||0)?li.status:w; }, 'controlled');
+            const scColor = getStatusColor(worstStatus);
+            const doneAct = sc.actions.filter(a => a.status === 'done').length;
+
+            const indicatorsHtml = allLI.map(li => {
+                const liColor = getStatusColor(li.status);
+                const current = li.data.length ? li.data[li.data.length-1] : '\u2014';
+                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:11px;color:var(--text-muted);width:140px;">${li.name}</span>
+                    ${miniSparkline(li.data, liColor, li.goal)}
+                    <span style="font-size:10px;color:${liColor};font-weight:600;margin-left:auto;">${getStatusLabel(li.status)}</span>
+                </div>`;
+            }).join('');
+
+            return `<div class="card" style="border-left:3px solid ${scColor};margin-bottom:12px;cursor:pointer;" onclick="showSubDetail(${idx},${si})">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <div style="font-size:15px;font-weight:600;">${sc.name}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${sc.description}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:11px;color:var(--text-muted);">$${(sc.lagging.w2w_impact/1000).toFixed(0)}K (${sc.lagging.items} items)</div>
+                        <div style="font-size:11px;color:var(--text-muted);">${doneAct}/${sc.actions.length} actions</div>
+                    </div>
+                </div>
+                ${indicatorsHtml ? `<div style="margin-top:12px;">${indicatorsHtml}</div>` : ''}
+                <div style="margin-top:8px;font-size:11px;color:var(--beam);font-weight:500;">See actions \u2192</div>
+            </div>`;
+        }).join('');
+
+        document.getElementById('rcDetail').style.display = 'block';
+        document.getElementById('rcDetail').innerHTML = `
+            <div style="margin-bottom:16px;"><button onclick="hideRCDetail()" style="background:none;border:none;color:var(--beam);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;padding:0;">\u2190 Back to Overview</button></div>
+            <div class="card" style="border-left:4px solid ${color};">
+                <div style="font-size:24px;font-weight:600;color:${color};letter-spacing:-0.02em;">${rc.name}</div>
+                <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">${rc.description}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">W2W Reference: $${(rc.lagging.w2w_impact/1000).toFixed(0)}K (${rc.lagging.pct_of_analyzed}% of analyzed) \u2014 ${subs.length} sub-causes</div>
+            </div>
+            <div class="card-title" style="margin-top:24px;margin-bottom:12px;">Sub-Causes</div>
+            ${subsHtml}`;
+        document.getElementById('rootCauseCards').style.display = 'none';
+        document.querySelector('#overview .kpi-row').style.display = 'none';
+        document.querySelector('#overview .card').style.display = 'none';
+        window.scrollTo(0, 0);
+    }
+
+    // Level 3: Show actions for a sub-cause
+    function showSubDetail(mainIdx, subIdx) {
+        const rc = rootCausesData[mainIdx];
+        const sc = rc.sub_causes[subIdx];
+        const mainColors = { process: '#EF5350', data: '#7E57C2', transactions: '#FFA726', execution: '#00B2A9' };
+        const color = mainColors[rc.id] || 'var(--beam)';
+
+        const indicatorsHtml = (sc.leading_indicators||[]).map(li => {
             const liColor = getStatusColor(li.status);
-            const current = li.data.length ? li.data[li.data.length - 1] : '\u2014';
+            const current = li.data.length ? li.data[li.data.length-1] : '\u2014';
             const baseline = li.data.length ? li.data[0] : '\u2014';
             return `<div class="card" style="border-left:3px solid ${liColor};">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                        <div style="font-size:14px;font-weight:600;">${li.name}</div>
-                        <div style="font-size:12px;color:${liColor};font-weight:600;margin-top:4px;">${getStatusLabel(li.status)}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:11px;color:var(--text-muted);">Baseline: ${baseline} \u2192 Current: <strong style="color:${liColor};">${current}</strong> \u2192 Goal: ${li.goal !== null ? li.goal : 'TBD'}</div>
-                    </div>
+                    <div><div style="font-size:14px;font-weight:600;">${li.name}</div><div style="font-size:12px;color:${liColor};font-weight:600;margin-top:4px;">${getStatusLabel(li.status)}</div></div>
+                    <div style="text-align:right;font-size:11px;color:var(--text-muted);">Baseline: ${baseline} \u2192 Current: <strong style="color:${liColor};">${current}</strong> \u2192 Goal: ${li.goal !== null ? li.goal : 'TBD'}</div>
                 </div>
                 <div style="margin-top:12px;">${miniSparkline(li.data, liColor, li.goal)}</div>
                 ${li.data.length ? `<div style="margin-top:8px;font-size:10px;color:var(--text-muted);">Weeks: ${li.weeks.join(' \u2192 ')}</div>` : ''}
             </div>`;
         }).join('');
 
-        // Actions for this root cause
-        const actionsHtml = rc.actions.map(a => {
-            const si = { pending: {badge:'PENDING',cls:'status-pending'}, active: {badge:'ACTIVE',cls:'status-active'}, alert: {badge:'ALERT',cls:'status-alert'}, done: {badge:'DONE',cls:'status-active'} };
-            const s = si[a.status] || si.pending;
-            const kpiMatch = rc.leading_indicators.find(li => li.name === a.kpi);
-            const kpiColor = kpiMatch ? getStatusColor(kpiMatch.status) : 'var(--text-muted)';
+        const actionsHtml = sc.actions.map(a => renderActionCard(a, sc)).join('');
 
-            let progressHtml = '';
-            if (a.baseline !== null && a.target !== null && a.current !== null) {
-                const range = Math.abs(a.baseline - a.target) || 1;
-                const progress = Math.min(100, Math.max(0, Math.abs(a.baseline - a.current) / range * 100));
-                const isGoingRight = (a.target < a.baseline) ? (a.current <= a.baseline) : (a.current >= a.baseline);
-                const barColor = isGoingRight ? '#4CAF50' : '#EF5350';
-                progressHtml = `<div style="margin-top:8px;">
-                    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px;">
-                        <span>Baseline: ${a.baseline}</span><span>Current: <strong style="color:${barColor};">${a.current}</strong></span><span>Target: ${a.target}</span>
-                    </div>
-                    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
-                        <div style="height:100%;width:${progress}%;background:${barColor};border-radius:3px;"></div>
-                    </div>
-                </div>`;
-            }
-
-            return `<div style="padding:12px;background:var(--surface2);border-radius:6px;margin-bottom:8px;${a.status === 'done' ? 'opacity:0.6;' : ''}">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <span class="status-badge ${s.cls}">${s.badge}</span>
-                    <span style="flex:1;font-size:13px;${a.status === 'done' ? 'text-decoration:line-through;' : ''}">${a.title}</span>
-                    <span class="dep-tag">${a.owner}</span>
-                </div>
-                ${a.kpi ? `<div style="margin-top:6px;font-size:11px;"><span style="color:var(--text-muted);">KPI:</span> <span style="color:${kpiColor};font-weight:500;">${a.kpi}</span></div>` : ''}
-                ${progressHtml}
-            </div>`;
-        }).join('');
-
-        document.getElementById('rcDetail').style.display = 'block';
         document.getElementById('rcDetail').innerHTML = `
-            <div style="margin-bottom:16px;">
-                <button onclick="hideRCDetail()" style="background:none;border:none;color:var(--beam);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;padding:0;">\u2190 Back to Overview</button>
+            <div style="margin-bottom:16px;display:flex;gap:16px;">
+                <button onclick="hideRCDetail()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;padding:0;">\u2190 Overview</button>
+                <button onclick="showMainDetail(${mainIdx})" style="background:none;border:none;color:var(--beam);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;padding:0;">\u2190 ${rc.name}</button>
             </div>
-            <div class="card" style="border-left:4px solid ${statusColor};">
-                <div style="font-size:22px;font-weight:600;letter-spacing:-0.02em;">${rc.name}</div>
-                <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">${rc.description}</div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">W2W Reference: $${(rc.lagging.w2w_impact/1000).toFixed(0)}K (${rc.lagging.pct_of_analyzed}% of analyzed)</div>
+            <div class="card" style="border-left:4px solid ${color};">
+                <div style="font-size:11px;color:${color};font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">${rc.name}</div>
+                <div style="font-size:22px;font-weight:600;letter-spacing:-0.02em;margin-top:4px;">${sc.name}</div>
+                <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">${sc.description}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">W2W: $${(sc.lagging.w2w_impact/1000).toFixed(0)}K (${sc.lagging.items} items)</div>
             </div>
-            <div class="card-title" style="margin-top:24px;margin-bottom:12px;">Leading Indicators</div>
-            ${indicatorsHtml}
-            <div class="card-title" style="margin-top:24px;margin-bottom:12px;">Actions (${rc.actions.filter(a=>a.status==='done').length}/${rc.actions.length} done)</div>
-            ${actionsHtml}
-        `;
-        document.getElementById('rootCauseCards').style.display = 'none';
-        document.querySelector('#overview .kpi-row').style.display = 'none';
-        document.querySelector('#overview .card').style.display = 'none';
+            ${indicatorsHtml ? `<div class="card-title" style="margin-top:24px;margin-bottom:12px;">Leading Indicators</div>${indicatorsHtml}` : ''}
+            <div class="card-title" style="margin-top:24px;margin-bottom:12px;">Actions (${sc.actions.filter(a=>a.status==='done').length}/${sc.actions.length} done)</div>
+            ${actionsHtml}`;
         window.scrollTo(0, 0);
     }
 
