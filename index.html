@@ -366,24 +366,16 @@
         <!-- LEVEL 1: Executive Summary -->
         <div id="overview" class="section active">
             <div class="kpi-row" id="overviewKpis"></div>
-            <div class="card">
-                <div class="card-title">Core Insight</div>
-                <p style="font-size: 18px; line-height: 1.5; max-width: 700px; font-weight: 300; letter-spacing: -0.01em;">
-                    The problem <strong style="color: #EF5350; font-weight: 600;">is not inventory</strong>. It's <strong style="color: var(--beam); font-weight: 600;">flow control</strong>.
-                    We measure <strong style="color: var(--beam);">leading indicators</strong> — weekly trends that tell us if actions are working before the money shows it.
-                </p>
-            </div>
-            <div id="rootCauseCards"></div>
-            <!-- Drill-down detail panel (hidden until click) -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" id="rootCauseCards"></div>
+            <div id="expandPanel"></div>
             <div id="rcDetail" style="display:none;"></div>
         </div>
 
         <!-- Pareto Detail -->
         <div id="pareto" class="section">
-            <div class="card">
-                <div class="card-title">Pareto — Top SKUs by Dollar Impact</div>
-                <div id="paretoChart"></div>
-            </div>
+            <div class="kpi-row" id="paretoKpis"></div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" id="paretoBuckets"></div>
+            <div id="paretoExpand"></div>
         </div>
 
         <!-- Trends -->
@@ -405,37 +397,43 @@
         <!-- Picking -->
         <div id="picking" class="section">
             <div class="card picking-card">
-                <div class="card-title">Picking — Critical Control Point</div>
+                <div class="card-title">Picking — Transversal Action</div>
                 <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 16px; font-weight: 400;">
-                    Picking (Ready for Picking → Picking in Process → Ready for Assembly) is where the chain between physical flow and system breaks most often.
-                    A cross-cutting action here addresses <strong style="color: var(--beam);">4 of 6 root causes</strong> simultaneously.
+                    Picking is the process where material moves from inventory to assembly. Digitalizing this single point addresses root causes across all 4 categories.
                 </p>
                 <div class="picking-grid">
                     <div class="picking-impact">
-                        <div class="picking-impact-title" style="color: #EF5350;">Process Breakdown — $108K</div>
-                        <div class="picking-impact-desc">Material consumed during picking but PID not completed. PS keeps showing phantom FG.</div>
-                        <div style="margin-top: 10px; font-size: 12px; color: var(--beam); font-weight: 500;">→ PID validation at pull time</div>
+                        <div class="picking-impact-title" style="color: #EF5350;">Process — 45%</div>
+                        <div class="picking-impact-desc">PID validation at pull time closes the loop that creates phantom FG inventory.</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: var(--beam); font-weight: 500;">→ Auto-complete PID on pick</div>
                     </div>
                     <div class="picking-impact">
-                        <div class="picking-impact-title" style="color: var(--orange);">Verification Gap — $85K</div>
-                        <div class="picking-impact-desc">Picking without validation leads to incorrect manual adjustments later.</div>
-                        <div style="margin-top: 10px; font-size: 12px; color: var(--beam); font-weight: 500;">→ Dual confirmation on qty/SKU</div>
+                        <div class="picking-impact-title" style="color: #7E57C2;">Data — 36%</div>
+                        <div class="picking-impact-desc">Barcode scanning eliminates description-based SKU selection errors.</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: var(--beam); font-weight: 500;">→ Scan to verify correct SKU</div>
                     </div>
                     <div class="picking-impact">
-                        <div class="picking-impact-title" style="color: var(--yellow);">Identification Failure — $44K</div>
-                        <div class="picking-impact-desc">Wrong SKU pulled due to missing labels or barcode.</div>
-                        <div style="margin-top: 10px; font-size: 12px; color: var(--beam); font-weight: 500;">→ Barcode scanning at pick point</div>
+                        <div class="picking-impact-title" style="color: #FFA726;">Transactions — 15%</div>
+                        <div class="picking-impact-desc">Dual confirmation replaces memory-based adjustments with system-validated picks.</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: var(--beam); font-weight: 500;">→ Dual confirm qty + SKU</div>
                     </div>
                     <div class="picking-impact">
-                        <div class="picking-impact-title" style="color: var(--green);">Material Flow — $33K</div>
-                        <div class="picking-impact-desc">Pulled material not recorded. WIP floating without ownership.</div>
+                        <div class="picking-impact-title" style="color: #00B2A9;">Execution — 4%</div>
+                        <div class="picking-impact-desc">Auto-register material pulled prevents WIP from floating without ownership.</div>
                         <div style="margin-top: 10px; font-size: 12px; color: var(--beam); font-weight: 500;">→ Auto-register on pull</div>
                     </div>
                 </div>
-                <div style="margin-top: 24px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 24px; text-align: center;">
-                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">Potential Impact of Digitizing Picking</div>
-                    <div style="font-size: 40px; font-weight: 300; color: var(--beam); margin-top: 8px; letter-spacing: -0.02em;">$270K</div>
-                    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">78% of total gap ($344K)</div>
+                <div style="margin-top: 24px; display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 20px; text-align: center;">
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">Picking Addresses</div>
+                        <div style="font-size: 36px; font-weight: 300; color: var(--beam); margin-top: 6px;">100%</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">of all 4 root cause categories</div>
+                    </div>
+                    <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 20px; text-align: center;">
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">Timeline</div>
+                        <div style="font-size: 36px; font-weight: 300; color: var(--beam); margin-top: 6px;">Apr 15</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Go-live target date</div>
+                    </div>
                 </div>
             </div>
 
@@ -555,32 +553,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
     // ===== DATA =====
-    const paretoItems = [
-        { sku: "60051", desc: "QX806BE", ps: 46973, actual: 3850, dif: 43123 },
-        { sku: "60383", desc: "AMP.100X2.PCB", ps: 0, actual: 40696, dif: -40696 },
-        { sku: "60398", desc: "SA8.5-GRILLE-R-SR", ps: 39878, actual: 3775, dif: 36103 },
-        { sku: "60546", desc: "SA63-7-ENC-STD", ps: 33558, actual: 780, dif: 32777 },
-        { sku: "66058", desc: "VXQ88R-STD", ps: 88010, actual: 120510, dif: -32500 },
-        { sku: "GRILL.AL.CUSTOM", desc: "CUSTOM GRILLE", ps: 23789, actual: 115, dif: 23675 },
-        { sku: "DRV.10.002.2", desc: "WOOFER 10IN SLIM", ps: 108859, actual: 88541, dif: 20319 },
-        { sku: "CAB.SA853-6-ENC", desc: "CAB.SA853-6-ENC", ps: 19355, actual: 0, dif: 19355 },
-        { sku: "CAB.AL.SA54-4", desc: "QUAD 5.25IN SUB", ps: 40300, actual: 23660, dif: 16640 },
-        { sku: "DRV.1.002", desc: "1IN TWEETER BE", ps: 87142, actual: 103606, dif: -16464 },
-        { sku: "60069", desc: "SA63-7-ENC", ps: 21331, actual: 5983, dif: 15348 },
-        { sku: "SPL5-DVBK", desc: "SPL5 DIVIDER BLOCK", ps: 10062, actual: 24405, dif: -14343 },
-        { sku: "60610", desc: "SA68 SPACESAVER", ps: 15531, actual: 29609, dif: -14078 },
-        { sku: "SPL6-DVBK", desc: "SPL6 DIVIDER BLOCK", ps: 7080, actual: 19425, dif: -12345 },
-        { sku: "NET.SA63-4", desc: "NETWORK 63SA-4", ps: 15656, actual: 27352, dif: -11696 },
-        { sku: "CAB.AL.SAS63-4", desc: "63SA-4 ENCLOSURE", ps: 89544, actual: 100860, dif: -11316 },
-        { sku: "OW64-EC", desc: "OW64-EC", ps: 4620, actual: 15585, dif: -10965 },
-        { sku: "60397", desc: "SA8.5-GRILLE-R-RF", ps: 18778, actual: 8034, dif: 10744 },
-        { sku: "CAB.AL.AT85QTIBAIM", desc: "AT85TI-BA-IM", ps: 9360, actual: 0, dif: 9360 },
-        { sku: "60059", desc: "QXC820S", ps: 9576, actual: 299, dif: 9277 },
-        { sku: "60594", desc: "SA68-7-ENC", ps: 154279, actual: 145037, dif: 9241 },
-        { sku: "CAB.AL.SAS42-4", desc: "42SAS-4 CABINET", ps: 43736, actual: 34760, dif: 8976 },
-        { sku: "MISC.MAGNET.CUP", desc: "MAGNET GRILLE CUPS", ps: 27989, actual: 19112, dif: 8877 },
-        { sku: "60035", desc: "PP15-M", ps: 8105, actual: 0, dif: 8105 }
-    ];
+    // paretoItems removed — now loaded dynamically by loadPareto()
 
     const trendWeeks = ["02.09", "02.16", "02.23", "03.02", "03.09", "03.16"];
     const trendData = {
@@ -609,26 +582,7 @@
     // ===== RENDER =====
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Pareto chart
-    const maxDif = Math.max(...paretoItems.map(p => Math.abs(p.dif)));
-    let cumulDif = 0;
-    const totalDif = paretoItems.reduce((s, p) => s + Math.abs(p.dif), 0);
-    document.getElementById('paretoChart').innerHTML = paretoItems.map(p => {
-        cumulDif += Math.abs(p.dif);
-        const pct = (Math.abs(p.dif) / maxDif * 100).toFixed(1);
-        const cumulPct = (cumulDif / totalDif * 100).toFixed(1);
-        const color = p.dif > 0 ? '#EF5350' : 'var(--green)';
-        const label = p.dif > 0 ? 'PS > Actual (phantom)' : 'Actual > PS (unrecorded)';
-        return `<div class="pareto-bar-row" title="${p.desc} — ${label}">
-            <div class="pareto-label"><strong>${p.sku}</strong> <span style="color: var(--text-muted); font-size: 11px;">${p.desc}</span></div>
-            <div class="pareto-bar-wrapper"><div class="pareto-bar-fill" style="width: ${pct}%; background: ${color}"></div></div>
-            <div class="pareto-value" style="color: ${color}">${p.dif > 0 ? '+' : ''}$${(p.dif/1000).toFixed(1)}K</div>
-            <div class="pareto-cumul">${cumulPct}%</div>
-        </div>`;
-    }).join('') + `<div style="margin-top: 16px; display: flex; gap: 24px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;">
-        <span><span style="display:inline-block;width:10px;height:10px;background:#EF5350;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>PS > Actual (phantom inventory)</span>
-        <span><span style="display:inline-block;width:10px;height:10px;background:var(--green);border-radius:2px;margin-right:6px;vertical-align:middle;"></span>Actual > PS (unrecorded in system)</span>
-    </div>`;
+    // Pareto is now dynamic — loaded by loadPareto() from API/JSON
 
     // All actions table — now dynamic from root_causes API
     function renderActions() {
@@ -636,15 +590,17 @@
         const rows = [];
         const statusColors = { pending: 'status-pending', active: 'status-active', alert: 'status-alert', done: 'status-active' };
         rootCausesData.forEach(rc => {
-            rc.actions.forEach(a => {
-                const sc = statusColors[a.status] || 'status-pending';
-                rows.push(`<tr class="action-row" data-status="${a.status}">
-                    <td style="font-weight:500;">${rc.short_name}</td>
-                    <td>${a.title}</td>
-                    <td><span class="status-badge ${sc}">${a.status.toUpperCase()}</span></td>
-                    <td>${a.kpi || '—'}</td>
-                    <td>${a.owner}</td>
-                </tr>`);
+            (rc.sub_causes || []).forEach(sub => {
+                sub.actions.forEach(a => {
+                    const sc = statusColors[a.status] || 'status-pending';
+                    rows.push(`<tr class="action-row" data-status="${a.status}">
+                        <td style="font-weight:500;">${sub.name}</td>
+                        <td>${a.title}</td>
+                        <td><span class="status-badge ${sc}">${a.status.toUpperCase()}</span></td>
+                        <td>${a.kpi || '—'}</td>
+                        <td>${a.owner}</td>
+                    </tr>`);
+                });
             });
         });
         document.getElementById('actionsBody').innerHTML = rows.join('');
@@ -730,10 +686,20 @@
     const API = '/.netlify/functions/data';
     let ownersData = [];
 
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     async function apiGet(key) {
-        const r = await fetch(`${API}?key=${key}`);
-        if (!r.ok) return null;
-        return r.json();
+        if (!isLocal) {
+            try {
+                const r = await fetch(`${API}?key=${key}`);
+                if (r.ok) return r.json();
+            } catch(e) {}
+        }
+        // Local or fallback: load from JSON files
+        try {
+            const r = await fetch(`data/${key}.json`);
+            if (r.ok) return r.json();
+        } catch(e) {}
+        return null;
     }
     async function apiPut(key, data) {
         await fetch(`${API}?key=${key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
@@ -831,12 +797,18 @@
             <ul class="team-actions">${actionsHtml}</ul>
             <button class="add-action-btn" onclick="showAddForm(${idx})">+ Add Action</button>
             <div class="action-form" id="form-${idx}">
-                <input type="text" id="form-title-${idx}" placeholder="Action title...">
+                <select id="form-rc-${idx}" style="color:var(--beam);" onfocus="populateRCDropdown(this)">
+                    <option value="">— Root Cause (required) —</option>
+                </select>
+                <input type="text" id="form-title-${idx}" placeholder="Action title (SMART: specific, measurable, time-bound)...">
+                <input type="text" id="form-kpi-${idx}" placeholder="KPI — how do we measure success? (required)">
                 <div style="display:flex;gap:8px;">
                     <select id="form-status-${idx}"><option value="pending">Pending</option><option value="active">Active</option><option value="alert">Alert</option></select>
-                    <input type="text" id="form-rc-${idx}" placeholder="Root cause..." style="flex:1;">
+                    <input type="text" id="form-baseline-${idx}" placeholder="Baseline" style="width:80px;">
+                    <input type="text" id="form-target-${idx}" placeholder="Target" style="width:80px;">
                 </div>
                 <input type="text" id="form-blocker-${idx}" placeholder="Blocker (optional)">
+                <div id="form-ai-${idx}" style="display:none;padding:8px;background:rgba(0,163,225,0.1);border-radius:4px;font-size:12px;color:var(--beam);margin-bottom:8px;"></div>
                 <div class="action-form-btns">
                     <button class="btn-save" onclick="saveAction(${idx})">Save</button>
                     <button class="btn-cancel" onclick="hideAddForm(${idx})">Cancel</button>
@@ -877,8 +849,19 @@
         await apiPut('owners', ownersData);
     }
 
+    function populateRCDropdown(select) {
+        if (select.options.length > 1) return; // already populated
+        rootCausesData.forEach(rc => {
+            (rc.sub_causes||[]).forEach(sc => {
+                const opt = document.createElement('option');
+                opt.value = sc.id;
+                opt.textContent = rc.name + ' \u2192 ' + sc.name;
+                select.appendChild(opt);
+            });
+        });
+    }
     function showAddForm(idx) { document.getElementById(`form-${idx}`).classList.add('show'); document.getElementById(`form-title-${idx}`).focus(); }
-    function hideAddForm(idx) { const f = document.getElementById(`form-${idx}`); f.classList.remove('show'); delete f.dataset.editIdx; f.querySelectorAll('input').forEach(i => i.value = ''); f.querySelector('select').value = 'pending'; }
+    function hideAddForm(idx) { const f = document.getElementById(`form-${idx}`); f.classList.remove('show'); delete f.dataset.editIdx; f.querySelectorAll('input').forEach(i => { i.value = ''; i.style.borderColor = ''; }); f.querySelectorAll('select').forEach(s => { s.selectedIndex = 0; s.style.borderColor = ''; }); }
 
     function editAction(ownerIdx, actionIdx) {
         const a = ownersData[ownerIdx].actions[actionIdx];
@@ -893,14 +876,19 @@
     }
 
     async function saveAction(idx) {
+        const rc = document.getElementById(`form-rc-${idx}`).value;
         const title = document.getElementById(`form-title-${idx}`).value.trim();
-        if (!title) return;
+        const kpi = document.getElementById(`form-kpi-${idx}`)?.value.trim() || '';
+        const baseline = document.getElementById(`form-baseline-${idx}`)?.value.trim() || '';
+        const target = document.getElementById(`form-target-${idx}`)?.value.trim() || '';
+        if (!rc) { document.getElementById(`form-rc-${idx}`).style.borderColor='#EF5350'; return; }
+        if (!title) { document.getElementById(`form-title-${idx}`).style.borderColor='#EF5350'; return; }
+        if (!kpi) { document.getElementById(`form-kpi-${idx}`).style.borderColor='#EF5350'; return; }
         const status = document.getElementById(`form-status-${idx}`).value;
-        const rc = document.getElementById(`form-rc-${idx}`).value.trim();
         const blocker = document.getElementById(`form-blocker-${idx}`).value.trim();
         const form = document.getElementById(`form-${idx}`);
         const editIdx = form.dataset.editIdx;
-        const actionData = { title, status, root_cause: rc || '', blocker: blocker || '' };
+        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, blocker: blocker || '' };
         if (editIdx !== undefined && editIdx !== '') {
             ownersData[idx].actions[parseInt(editIdx)] = actionData;
             delete form.dataset.editIdx;
@@ -915,27 +903,128 @@
     loadTeam();
 
     // Also load Pareto from API and update chart
+    let paretoData = [];
+    let paretoGroups = {};
+    let expandedPareto = null;
+    let expandedParetoSub = null;
+    const paretoColors = { Process: '#EF5350', Data: '#7E57C2', Transactions: '#FFA726', Execution: '#00B2A9' };
+
     async function loadPareto() {
-        const data = await apiGet('pareto');
-        if (!data) return;
-        const maxDif = Math.max(...data.map(p => p.value));
-        let cumul = 0;
-        const total = data.reduce((s, p) => s + p.value, 0);
-        document.getElementById('paretoChart').innerHTML = data.map(p => {
-            cumul += p.value;
-            const pct = (p.value / maxDif * 100).toFixed(1);
-            const cumulPct = (cumul / total * 100).toFixed(1);
-            const color = '#EF5350';
-            return `<div class="pareto-bar-row" title="${p.description} — ${p.findings}">
-                <div class="pareto-label"><strong>${p.item_id}</strong> <span style="color:var(--text-muted);font-size:11px;">${p.description}</span></div>
-                <div class="pareto-bar-wrapper"><div class="pareto-bar-fill" style="width:${pct}%;background:${color}"></div></div>
-                <div class="pareto-value" style="color:${color}">$${(p.value/1000).toFixed(1)}K</div>
-                <div class="pareto-cumul">${cumulPct}%</div>
+        paretoData = await apiGet('pareto');
+        if (!paretoData) return;
+        const total = paretoData.reduce((s, p) => s + p.value, 0);
+
+        paretoData.forEach(p => {
+            if (!paretoGroups[p.main_code]) paretoGroups[p.main_code] = { total: 0, items: [], subs: {} };
+            paretoGroups[p.main_code].total += p.value;
+            paretoGroups[p.main_code].items.push(p);
+            const key = p.secondary_code || 'Other';
+            if (!paretoGroups[p.main_code].subs[key]) paretoGroups[p.main_code].subs[key] = { total: 0, items: [] };
+            paretoGroups[p.main_code].subs[key].total += p.value;
+            paretoGroups[p.main_code].subs[key].items.push(p);
+        });
+
+        document.getElementById('paretoKpis').innerHTML = `
+            <div class="kpi"><div class="kpi-label">Items Analyzed</div><div class="kpi-value accent">${paretoData.length}</div><div class="kpi-sub">from W2W 2025</div></div>
+            <div class="kpi"><div class="kpi-label">Total Value</div><div class="kpi-value red">$${(total/1000).toFixed(0)}K</div><div class="kpi-sub">discrepancy analyzed</div></div>
+            <div class="kpi"><div class="kpi-label">Categories</div><div class="kpi-value accent">${Object.keys(paretoGroups).length}</div><div class="kpi-sub">root cause groups</div></div>
+            <div class="kpi"><div class="kpi-label">Top Item</div><div class="kpi-value red">$${(paretoData[0].value/1000).toFixed(0)}K</div><div class="kpi-sub">${paretoData[0].item_id}</div></div>
+        `;
+        renderParetoBuckets();
+    }
+
+    function renderParetoBuckets() {
+        const total = paretoData.reduce((s, p) => s + p.value, 0);
+        const sorted = Object.entries(paretoGroups).sort((a,b) => b[1].total - a[1].total);
+
+        document.getElementById('paretoBuckets').innerHTML = sorted.map(([code, group], idx) => {
+            const color = paretoColors[code] || 'var(--beam)';
+            const pct = (group.total / total * 100).toFixed(1);
+            const isSelected = expandedPareto === idx;
+            return `<div class="card" style="cursor:pointer;border-left:4px solid ${color};transition:all 0.2s;${isSelected ? 'outline:2px solid '+color+';' : expandedPareto !== null ? 'opacity:0.5;' : ''}" onclick="togglePareto(${idx})">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:18px;font-weight:600;color:${color};">${code}</div>
+                    <div style="font-size:24px;font-weight:300;color:${color};">$${(group.total/1000).toFixed(0)}K</div>
+                </div>
+                <div style="margin-top:8px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+                    <span>${group.items.length} items</span>
+                    <span>${pct}% of total</span>
+                </div>
+                <div style="margin-top:6px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;"></div>
+                </div>
             </div>`;
-        }).join('') + `<div style="margin-top:16px;font-size:11px;color:var(--text-muted);font-weight:500;">
-            <span style="color:var(--beam);">Source: Pareto INV Count 2025.xlsx</span> — ${data.length} items, $${(total/1000).toFixed(0)}K total
+        }).join('');
+
+        renderParetoExpand();
+    }
+
+    function togglePareto(idx) {
+        if (expandedPareto === idx) { expandedPareto = null; expandedParetoSub = null; }
+        else { expandedPareto = idx; expandedParetoSub = null; }
+        renderParetoBuckets();
+    }
+
+    function toggleParetoSub(subIdx) {
+        if (expandedParetoSub === subIdx) expandedParetoSub = null;
+        else expandedParetoSub = subIdx;
+        renderParetoExpand();
+    }
+
+    function renderParetoExpand() {
+        const panel = document.getElementById('paretoExpand');
+        if (expandedPareto === null) { panel.innerHTML = ''; return; }
+
+        const total = paretoData.reduce((s, p) => s + p.value, 0);
+        const sorted = Object.entries(paretoGroups).sort((a,b) => b[1].total - a[1].total);
+        const [code, group] = sorted[expandedPareto];
+        const color = paretoColors[code] || 'var(--beam)';
+        const sortedSubs = Object.entries(group.subs).sort((a,b) => b[1].total - a[1].total);
+
+        // Sub-cause buckets in a row
+        const subBucketsHtml = sortedSubs.map(([subName, sg], si) => {
+            const sgPct = (sg.total / total * 100).toFixed(1);
+            const isSelected = expandedParetoSub === si;
+            return `<div class="card" style="cursor:pointer;border-left:3px solid ${color};transition:all 0.2s;${isSelected ? 'outline:2px solid '+color+';' : expandedParetoSub !== null ? 'opacity:0.5;' : ''}" onclick="toggleParetoSub(${si})">
+                <div style="font-size:12px;font-weight:600;">${subName.substring(0,50)}${subName.length>50?'...':''}</div>
+                <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:14px;font-weight:600;color:${color};">$${(sg.total/1000).toFixed(0)}K</span>
+                    <span style="font-size:10px;color:var(--text-muted);">${sg.items.length} items</span>
+                </div>
+            </div>`;
+        }).join('');
+
+        // Detail for selected sub
+        let detailHtml = '';
+        if (expandedParetoSub !== null) {
+            const [subName, sg] = sortedSubs[expandedParetoSub];
+            const maxVal = Math.max(...sg.items.map(p => p.value));
+            const itemsHtml = sg.items.sort((a,b) => b.value - a.value).map(p => {
+                const barPct = (p.value / maxVal * 100).toFixed(1);
+                return `<div class="pareto-bar-row">
+                    <div class="pareto-label"><strong>${p.item_id}</strong> <span style="color:var(--text-muted);font-size:11px;">${p.description}</span></div>
+                    <div class="pareto-bar-wrapper"><div class="pareto-bar-fill" style="width:${barPct}%;background:${color}"></div></div>
+                    <div class="pareto-value" style="color:${color}">$${(p.value/1000).toFixed(1)}K</div>
+                    <div class="pareto-cumul" style="font-size:10px;width:120px;" title="${p.findings}">${p.findings.substring(0,30)}${p.findings.length>30?'...':''}</div>
+                </div>`;
+            }).join('');
+
+            detailHtml = `<div class="card" style="margin-top:16px;border-left:4px solid ${color};">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div style="font-size:15px;font-weight:600;">${subName}</div>
+                    <div style="font-size:16px;font-weight:600;color:${color};">$${(sg.total/1000).toFixed(0)}K</div>
+                </div>
+                ${itemsHtml}
+            </div>`;
+        }
+
+        panel.innerHTML = `<div style="padding:16px 0;">
+            <div style="font-size:11px;color:${color};text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:12px;">${code} \u2014 Sub-Groups</div>
+            <div style="display:grid;grid-template-columns:repeat(${sortedSubs.length},1fr);gap:12px;">${subBucketsHtml}</div>
+            ${detailHtml}
         </div>`;
     }
+
     loadPareto();
 
     // ===== ROOT CAUSES WITH LEADING INDICATORS =====
@@ -1013,13 +1102,13 @@
         const controlledCount = allIndicators.filter(li => li.status === 'controlled').length;
 
         document.getElementById('overviewKpis').innerHTML = `
-            <div class="kpi"><div class="kpi-label">Categories</div><div class="kpi-value accent">${rootCausesData.length}</div><div class="kpi-sub">${allSubs.length} sub-causes identified</div></div>
+            <div class="kpi"><div class="kpi-label">Root Causes</div><div class="kpi-value accent">${rootCausesData.length}</div><div class="kpi-sub">${allSubs.length} sub-causes</div></div>
             <div class="kpi"><div class="kpi-label">Actions</div><div class="kpi-value green">${doneActions}/${totalActions}</div><div class="kpi-sub">completed</div></div>
             <div class="kpi"><div class="kpi-label">Controlled</div><div class="kpi-value green">${controlledCount}</div><div class="kpi-sub">indicators trending right</div></div>
             <div class="kpi"><div class="kpi-label">Alerts</div><div class="kpi-value ${alertCount > 0 ? 'red' : 'green'}">${alertCount}</div><div class="kpi-sub">need attention</div></div>
         `;
 
-        // Level 1: Main code cards with sub-cause previews
+        // Level 1: 4 clean bucket cards — no sub-causes shown until click
         const mainColors = { process: '#EF5350', data: '#7E57C2', transactions: '#FFA726', execution: '#00B2A9' };
         document.getElementById('rootCauseCards').innerHTML = rootCausesData.map((rc, idx) => {
             const color = mainColors[rc.id] || 'var(--beam)';
@@ -1030,37 +1119,26 @@
                 const p = { worse:4, rising:3, volatile:2, new_tracking:1, controlled:0 };
                 return (p[li.status]||0) > (p[w]||0) ? li.status : w;
             }, 'controlled');
+            const worstColor = getStatusColor(worstStatus);
+            const pct = totalAct ? Math.round(doneAct/totalAct*100) : 0;
 
-            const subsPreview = subs.map(sc => {
-                const scWorst = (sc.leading_indicators||[]).reduce((w, li) => {
-                    const p = { worse:4, rising:3, volatile:2, new_tracking:1, controlled:0 };
-                    return (p[li.status]||0) > (p[w]||0) ? li.status : w;
-                }, 'controlled');
-                const scColor = getStatusColor(scWorst);
-                const scDone = sc.actions.filter(a => a.status === 'done').length;
-                const topIndicator = (sc.leading_indicators||[]).find(li => li.data && li.data.length > 0);
-                return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
-                    <span style="width:8px;height:8px;border-radius:50%;background:${scColor};flex-shrink:0;"></span>
-                    <span style="flex:1;font-size:13px;">${sc.name}</span>
-                    ${topIndicator ? miniSparkline(topIndicator.data, scColor, topIndicator.goal) : '<span style="font-size:11px;color:var(--text-muted);">New</span>'}
-                    <span style="font-size:10px;color:${scColor};font-weight:600;">${getStatusLabel(scWorst)}</span>
-                </div>`;
-            }).join('');
-
-            return `<div class="card" style="cursor:pointer;border-left:4px solid ${color};margin-bottom:16px;" onclick="showMainDetail(${idx})">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                        <div style="font-size:20px;font-weight:600;color:${color};letter-spacing:-0.02em;">${rc.name}</div>
-                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${rc.description}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:18px;font-weight:300;color:${color};">${rc.lagging.pct_of_analyzed}%</div>
-                        <div style="font-size:11px;color:var(--text-muted);">$${(rc.lagging.w2w_impact/1000).toFixed(0)}K W2W ref</div>
-                        <div style="font-size:11px;color:var(--text-muted);">${doneAct}/${totalAct} actions</div>
-                    </div>
+            return `<div class="card rc-bucket" style="cursor:pointer;border-left:4px solid ${color};transition:all 0.2s;" onclick="showMainDetail(${idx})">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:20px;font-weight:600;color:${color};letter-spacing:-0.02em;">${rc.name}</div>
+                    <div style="font-size:28px;font-weight:300;color:${color};">${rc.lagging.pct_of_analyzed}%</div>
                 </div>
-                <div style="margin-top:12px;">${subsPreview}</div>
-                <div style="margin-top:8px;font-size:11px;color:var(--beam);font-weight:500;">${subs.length} sub-causes \u2192</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">${rc.description}</div>
+                <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:${worstColor};font-weight:600;">${getStatusLabel(worstStatus)}</span>
+                    <span style="font-size:11px;color:var(--text-muted);">${subs.length} sub-causes</span>
+                </div>
+                <div style="margin-top:8px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:${pct===100?'#4CAF50':color};border-radius:2px;"></div>
+                </div>
+                <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+                    <span>${doneAct}/${totalAct} actions done</span>
+                    <span>$${(rc.lagging.w2w_impact/1000).toFixed(0)}K W2W ref</span>
+                </div>
             </div>`;
         }).join('');
       } catch(e) {
@@ -1088,8 +1166,152 @@
         </div>`;
     }
 
-    // Level 2: Show sub-causes for a main code
+    let expandedMain = null;
+    let expandedSub = null;
+
     function showMainDetail(idx) {
+        // Toggle: if already expanded, collapse
+        if (expandedMain === idx) { expandedMain = null; expandedSub = null; renderOverviewExpand(); return; }
+        expandedMain = idx; expandedSub = null; renderOverviewExpand();
+    }
+
+    function showSubDetail2(mainIdx, subIdx) {
+        if (expandedSub === subIdx) { expandedSub = null; renderOverviewExpand(); return; }
+        expandedSub = subIdx; renderOverviewExpand();
+    }
+
+    function renderOverviewExpand() {
+        const panel = document.getElementById('expandPanel');
+        // Reset card highlights
+        document.querySelectorAll('.rc-bucket').forEach(el => { el.style.outline = 'none'; el.style.opacity = '1'; });
+
+        if (expandedMain === null) { panel.innerHTML = ''; return; }
+
+        // Dim non-selected, highlight selected
+        document.querySelectorAll('.rc-bucket').forEach((el, i) => {
+            if (i === expandedMain) { el.style.outline = '2px solid var(--beam)'; el.style.opacity = '1'; }
+            else { el.style.opacity = '0.5'; }
+        });
+
+        const rc = rootCausesData[expandedMain];
+        const mainColors = { process: '#EF5350', data: '#7E57C2', transactions: '#FFA726', execution: '#00B2A9' };
+        const color = mainColors[rc.id] || 'var(--beam)';
+        const subs = rc.sub_causes || [];
+
+        // Highlight selected card
+        const cards = document.querySelectorAll('.rc-bucket');
+        if (cards[expandedMain]) cards[expandedMain].style.outline = '2px solid ' + color;
+
+        // Build sub-cause cards
+        const subsHtml = subs.map((sc, si) => {
+            const allLI = sc.leading_indicators || [];
+            const worstStatus = allLI.reduce((w, li) => { const p={worse:4,rising:3,volatile:2,new_tracking:1,controlled:0}; return (p[li.status]||0)>(p[w]||0)?li.status:w; }, 'controlled');
+            const scColor = getStatusColor(worstStatus);
+            const doneAct = sc.actions.filter(a => a.status === 'done').length;
+            const isExpanded = expandedSub === si;
+
+            // Sub-cause detail: indicators + actions
+            let detailHtml = '';
+            if (isExpanded) {
+                const indicatorsHtml = allLI.map(li => {
+                    const liColor = getStatusColor(li.status);
+                    const current = li.data.length ? li.data[li.data.length-1] : '\u2014';
+                    const baseline = li.data.length ? li.data[0] : '\u2014';
+                    return `<div style="padding:12px;background:var(--bg);border-radius:6px;border-left:3px solid ${liColor};margin-bottom:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div><span style="font-size:13px;font-weight:600;">${li.name}</span> <span style="font-size:10px;color:${liColor};font-weight:600;margin-left:8px;">${getStatusLabel(li.status)}</span></div>
+                            <div style="font-size:11px;color:var(--text-muted);">Baseline: ${baseline} \u2192 Current: <strong style="color:${liColor};">${current}</strong> \u2192 Goal: ${li.goal !== null ? li.goal : 'TBD'}</div>
+                        </div>
+                        <div style="margin-top:8px;">${miniSparkline(li.data, liColor, li.goal)}</div>
+                    </div>`;
+                }).join('');
+
+                const actionsHtml = sc.actions.map(a => renderActionCard(a, sc)).join('');
+
+                detailHtml = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+                    ${indicatorsHtml ? `<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;">Leading Indicators</div>${indicatorsHtml}` : ''}
+                    <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;margin-top:12px;">Actions (${doneAct}/${sc.actions.length})</div>
+                    ${actionsHtml}
+                </div>`;
+            }
+
+            return `<div class="card" style="border-left:3px solid ${scColor};cursor:pointer;${isExpanded ? 'outline:2px solid '+scColor+';' : ''}" onclick="showSubDetail2(${expandedMain},${si})">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:14px;font-weight:600;">${sc.name}</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${sc.description}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:10px;color:${scColor};font-weight:600;">${getStatusLabel(worstStatus)}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">${doneAct}/${sc.actions.length} actions</div>
+                        <div style="font-size:11px;color:var(--text-muted);">$${(sc.lagging.w2w_impact/1000).toFixed(0)}K</div>
+                    </div>
+                </div>
+                ${detailHtml}
+            </div>`;
+        }).join('');
+
+        // Sub-cause mini-buckets in a single row
+        const subBucketsHtml = subs.map((sc, si) => {
+            const allLI = sc.leading_indicators || [];
+            const worstStatus = allLI.reduce((w, li) => { const p={worse:4,rising:3,volatile:2,new_tracking:1,controlled:0}; return (p[li.status]||0)>(p[w]||0)?li.status:w; }, 'controlled');
+            const scColor = getStatusColor(worstStatus);
+            const doneAct = sc.actions.filter(a => a.status === 'done').length;
+            const isSelected = expandedSub === si;
+            return `<div class="card sub-bucket" style="cursor:pointer;border-left:3px solid ${scColor};transition:all 0.2s;${isSelected ? 'outline:2px solid '+scColor+';opacity:1;' : expandedSub !== null ? 'opacity:0.5;' : ''}" onclick="showSubDetail2(${expandedMain},${si})">
+                <div style="font-size:13px;font-weight:600;">${sc.name}</div>
+                <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:10px;color:${scColor};font-weight:600;">${getStatusLabel(worstStatus)}</span>
+                    <span style="font-size:10px;color:var(--text-muted);">${doneAct}/${sc.actions.length}</span>
+                </div>
+            </div>`;
+        }).join('');
+
+        // Sub-cause detail (full width below)
+        let subDetailHtml = '';
+        if (expandedSub !== null) {
+            const sc = subs[expandedSub];
+            const allLI = sc.leading_indicators || [];
+
+            const indicatorsHtml = allLI.map(li => {
+                const liColor = getStatusColor(li.status);
+                const current = li.data.length ? li.data[li.data.length-1] : '\u2014';
+                const baseline = li.data.length ? li.data[0] : '\u2014';
+                return `<div style="padding:16px;background:var(--bg);border-radius:6px;border-left:3px solid ${liColor};">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><span style="font-size:14px;font-weight:600;">${li.name}</span> <span style="font-size:10px;color:${liColor};font-weight:600;margin-left:8px;">${getStatusLabel(li.status)}</span></div>
+                        <div style="font-size:11px;color:var(--text-muted);">Baseline: ${baseline} \u2192 Current: <strong style="color:${liColor};">${current}</strong> \u2192 Goal: ${li.goal !== null ? li.goal : 'TBD'}</div>
+                    </div>
+                    <div style="margin-top:10px;">${miniSparkline(li.data, liColor, li.goal)}</div>
+                    ${li.data.length ? `<div style="margin-top:6px;font-size:10px;color:var(--text-muted);">Weeks: ${li.weeks.join(' \u2192 ')}</div>` : ''}
+                </div>`;
+            }).join('');
+
+            const actionsHtml = sc.actions.map(a => renderActionCard(a, sc)).join('');
+
+            subDetailHtml = `<div style="margin-top:16px;">
+                <div class="card" style="border-left:4px solid ${color};">
+                    <div style="font-size:18px;font-weight:600;letter-spacing:-0.02em;">${sc.name}</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${sc.description}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">$${(sc.lagging.w2w_impact/1000).toFixed(0)}K W2W ref \u2014 ${sc.lagging.items} items analyzed</div>
+                </div>
+                ${indicatorsHtml ? `<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin:16px 0 8px;">Leading Indicators</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;">${indicatorsHtml}</div>` : ''}
+                <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin:16px 0 8px;">Actions (${sc.actions.filter(a=>a.status==='done').length}/${sc.actions.length} done)</div>
+                ${actionsHtml}
+            </div>`;
+        }
+
+        panel.innerHTML = `<div style="padding:16px 0;">
+            <div style="font-size:11px;color:${color};text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:12px;">${rc.name} \u2014 Sub-Causes</div>
+            <div style="display:grid;grid-template-columns:repeat(${subs.length},1fr);gap:12px;">${subBucketsHtml}</div>
+            ${subDetailHtml}
+        </div>`;
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // (old functions removed — all drill-down is now inline)
+    function _unused_old(idx) { return; }
+    function _old_showMainDetail(idx) {
         selectedRC = idx;
         const rc = rootCausesData[idx];
         const mainColors = { process: '#EF5350', data: '#7E57C2', transactions: '#FFA726', execution: '#00B2A9' };
