@@ -397,8 +397,25 @@
                     <canvas id="shortPidChart"></canvas>
                 </div>
             </div>
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-title">Cycle Count — Pareto by Root Cause (Wks 1–8)</div>
+            <div class="card" style="margin-top: 20px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div class="card-title" style="margin-bottom:4px;">Cycle Count — Weekly Accuracy & Root Causes</div>
+                    <p style="color:var(--text-muted);font-size:12px;margin:0;">Upload the Weekly Risk Based Cycle Count Excel to update.</p>
+                </div>
+                <label style="padding:8px 16px;border:1px solid var(--beam);background:transparent;color:var(--beam);cursor:pointer;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;text-transform:uppercase;letter-spacing:0.05em;">
+                    Upload Cycle Count
+                    <input type="file" accept=".xlsx,.xls" onchange="handleCycleUpload(this)" style="display:none;">
+                </label>
+            </div>
+            <div id="cycleUploadStatus" style="display:none;padding:12px;margin-bottom:12px;border-radius:6px;font-size:13px;"></div>
+            <div class="card" style="margin-top:12px;">
+                <div class="card-title">Inventory Accuracy by Week</div>
+                <div class="chart-container">
+                    <canvas id="cycleAccuracyChart"></canvas>
+                </div>
+            </div>
+            <div class="card" style="margin-top:12px;">
+                <div class="card-title">Cycle Count — Root Cause Pareto</div>
                 <div class="chart-container">
                     <canvas id="cycleCountChart"></canvas>
                 </div>
@@ -662,21 +679,46 @@
             }
         });
 
-        if (window._ccChart) { window._ccChart.destroy(); }
+        // Cycle count accuracy chart
+        if (cycleCountWeeklyData.weeks.length) {
+            if (window._accChart) window._accChart.destroy();
+            window._accChart = new Chart(document.getElementById('cycleAccuracyChart'), {
+                type: 'line',
+                data: {
+                    labels: cycleCountWeeklyData.weeks,
+                    datasets: [
+                        { label: 'Accuracy %', data: cycleCountWeeklyData.accuracy, borderColor: '#4CAF50', backgroundColor: '#4CAF5015', borderWidth: 2, tension: 0.3, pointRadius: 4, yAxisID: 'y' },
+                        { label: 'Adjustment $', data: cycleCountWeeklyData.adjustments, borderColor: '#EF5350', backgroundColor: '#EF535015', borderWidth: 2, tension: 0.3, pointRadius: 4, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#6b7780', usePointStyle: true, padding: 16, font: { size: 11, weight: 500 } } } },
+                    scales: {
+                        x: { grid: { color: '#3a444c' }, ticks: { color: '#6b7780', font: { size: 10 } } },
+                        y: { position: 'left', grid: { color: '#3a444c' }, ticks: { color: '#4CAF50', font: { size: 11 }, callback: v => v + '%' }, min: 70, max: 105 },
+                        y1: { position: 'right', grid: { display: false }, ticks: { color: '#EF5350', font: { size: 11 }, callback: v => '$' + v } }
+                    }
+                }
+            });
+        }
+
+        // Cycle count root cause pareto
+        const ccPareto = cycleCountWeeklyData.pareto.length ? cycleCountWeeklyData.pareto : cycleCountData;
+        if (window._ccChart) window._ccChart.destroy();
         window._ccChart = new Chart(document.getElementById('cycleCountChart'), {
             type: 'bar',
             data: {
-                labels: cycleCountData.map(d => d.cause),
+                labels: ccPareto.map(d => d.cause),
                 datasets: [{
                     label: 'Occurrences',
-                    data: cycleCountData.map(d => d.count),
+                    data: ccPareto.map(d => d.count),
                     backgroundColor: ['#EF5350', '#FFA726', '#7E57C2', '#F9A825', '#42A5F5'],
                     borderRadius: 4
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#6b7780', font: { size: 10 } } },
@@ -1005,6 +1047,85 @@
         statusDiv.style.border = '1px solid rgba(198,40,40,0.2)';
         statusDiv.style.color = '#EF5350';
         statusDiv.textContent = msg;
+    }
+
+    // ===== FILE UPLOAD — Cycle Count =====
+    let cycleCountWeeklyData = { weeks: [], accuracy: [], adjustments: [], pareto: [] };
+
+    async function handleCycleUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const statusDiv = document.getElementById('cycleUploadStatus');
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = 'rgba(0,163,225,0.08)';
+        statusDiv.style.border = '1px solid rgba(0,163,225,0.2)';
+        statusDiv.style.color = 'var(--beam)';
+        statusDiv.textContent = 'Reading Cycle Count Excel...';
+
+        try {
+            const data = await file.arrayBuffer();
+            const wb = XLSX.read(data);
+
+            // Extract weekly data from Week sheets
+            const weeks = [], accuracy = [], adjustments = [];
+            wb.SheetNames.filter(n => n.startsWith('Week')).sort((a,b) => {
+                const na = parseInt(a.replace('Week ',''));
+                const nb = parseInt(b.replace('Week ',''));
+                return na - nb;
+            }).forEach(name => {
+                const ws = wb.Sheets[name];
+                const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+                let adj = 0, acc = 0;
+                rows.forEach(r => {
+                    if (!r) return;
+                    for (let c = 0; c < (r.length || 0); c++) {
+                        if (String(r[c] || '') === 'Adjustment Total' && r[c+1] !== undefined) adj = r[c+1];
+                        if (String(r[c] || '') === 'Accuracy' && r[c+1] !== undefined) acc = r[c+1];
+                    }
+                });
+                weeks.push(name);
+                accuracy.push(Math.round(acc * 1000) / 10);
+                adjustments.push(Math.round(adj * 100) / 100);
+            });
+
+            // Extract Pareto from Pareto Summary sheet
+            const pareto = [];
+            const ps = wb.Sheets['Pareto Summary'];
+            if (ps) {
+                const pRows = XLSX.utils.sheet_to_json(ps, {header:1});
+                let headerFound = false;
+                pRows.forEach(r => {
+                    if (!r || !r[0]) return;
+                    if (String(r[0]).includes('Root Cause')) { headerFound = true; return; }
+                    if (String(r[0]) === 'Total') return;
+                    if (headerFound && r[0] && r[1]) {
+                        pareto.push({ cause: r[0], count: r[1], adjustment: r[2] || 0 });
+                    }
+                });
+            }
+
+            cycleCountWeeklyData = { weeks, accuracy, adjustments, pareto };
+
+            // Save to blob
+            if (!isLocal) await apiPut('cycle_count', cycleCountWeeklyData);
+
+            // Refresh charts
+            initCharts();
+
+            statusDiv.style.background = 'rgba(46,125,50,0.08)';
+            statusDiv.style.border = '1px solid rgba(46,125,50,0.2)';
+            statusDiv.style.color = '#4CAF50';
+            const avgAcc = (accuracy.reduce((s,v) => s+v, 0) / accuracy.length).toFixed(1);
+            statusDiv.textContent = `Loaded ${weeks.length} weeks. Avg accuracy: ${avgAcc}%. Root causes: ${pareto.length}. Latest: ${weeks[weeks.length-1]} (${accuracy[accuracy.length-1]}%)`;
+
+        } catch(e) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = 'rgba(198,40,40,0.08)';
+            statusDiv.style.border = '1px solid rgba(198,40,40,0.2)';
+            statusDiv.style.color = '#EF5350';
+            statusDiv.textContent = 'Error: ' + e.message;
+        }
+        input.value = '';
     }
 
     let lastAISuggestion = {};
