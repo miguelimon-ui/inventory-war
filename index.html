@@ -489,13 +489,14 @@
                 </p>
                 <div class="gantt" id="pickingGantt"></div>
                 <div class="gantt-legend">
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #EF5350;"></div> Pick Locations (BLOCKER)</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #7E57C2;"></div> IT — Michael Fagan</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #FFA726;"></div> Finance</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00B2A9;"></div> Production — Alberto/Tania</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: var(--beam);"></div> App Dev — Miguel</div>
-                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #4CAF50;"></div> Ongoing Ops</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #EF5350;"></div> Phase 1 — BLOCKER</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #7E57C2;"></div> Phase 2A — Issue to Kit</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #FFA726;"></div> Phase 2B — Finance</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00B2A9;"></div> Phase 3 — Material Move</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #00A3E1;"></div> Phase 4 — Picking App</div>
+                    <div class="gantt-legend-item"><div class="gantt-legend-dot" style="background: #4CAF50;"></div> Phase 5 — Ongoing</div>
                 </div>
+                <div style="margin-top:8px;font-size:11px;color:var(--text-muted);" id="ganttSource"></div>
             </div>
         </div>
 
@@ -891,95 +892,63 @@
         });
     }
 
-    // ===== PICKING GANTT =====
-    const ganttWeeks = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12','W13','W14'];
-    const totalWeeks = ganttWeeks.length;
+    // ===== PICKING GANTT (DYNAMIC) =====
 
-    // Real phases from Picking App doc — consolidated with technical detail
-    const ganttTasks = [
-        // Phase 1: Fixed Pick Locations — BLOCKER
-        { id: 'p1', phase: 'Phase 1 — Fixed Pick Locations · BLOCKER', isPhase: true },
-        { id: '1a', name: 'Define fixed pick locations list', start: 0, end: 1, color: '#EF5350', cat: 'infra', deps: [], owner: 'Miguel', addresses: '' },
-        { id: '1b', name: 'Deliver list to IT', start: 1, end: 1.5, color: '#EF5350', cat: 'infra', deps: ['1a'], owner: 'Miguel', addresses: 'DONE — Mar 20' },
-        { id: '1c', name: 'Massive upload pick locations in PS', start: 1.5, end: 2.5, color: '#EF5350', cat: 'infra', deps: ['1b'], owner: 'IT — Peter', addresses: '~20 min, surgical — zero PID movement' },
-        { id: '1d', name: 'Validate locations in PS match physical', start: 2.5, end: 3, color: '#EF5350', cat: 'infra', deps: ['1c'], owner: 'Miguel + Production', addresses: '' },
+    async function loadGantt() {
+        const data = await apiGet('gantt');
+        if (!data) return;
 
-        // Phase 2A: Issue to Kit Change (parallel to 2B)
-        { id: 'p2a', phase: 'Phase 2A — Issue to Kit Change · IT', isPhase: true },
-        { id: '2a1', name: 'Configure Issue-to-Kit in PS', start: 3, end: 4, color: '#7E57C2', cat: 'it', deps: ['1c'], owner: 'IT — Michael Fagan', addresses: 'System Misalignment' },
-        { id: '2a2', name: 'Test kit transactions with sample orders', start: 4, end: 5, color: '#7E57C2', cat: 'it', deps: ['2a1'], owner: 'IT — Michael Fagan', addresses: '' },
-
-        // Phase 2B: Finance Change (parallel to 2A)
-        { id: 'p2b', phase: 'Phase 2B — Finance Change · Parallel to 2A', isPhase: true },
-        { id: '2b1', name: 'Update cost accounting for pick locations', start: 3, end: 4.5, color: '#FFA726', cat: 'finance', deps: ['1c'], owner: 'Finance', addresses: 'Verification Gap' },
-        { id: '2b2', name: 'Validate financial reports post-change', start: 4.5, end: 5, color: '#FFA726', cat: 'finance', deps: ['2b1'], owner: 'Finance', addresses: '' },
-
-        // Phase 3: Move Material to Pick Locations
-        { id: 'p3', phase: 'Phase 3 — Move Material to Pick Locations', isPhase: true },
-        { id: '3a', name: 'Plan material movement (priority SKUs first)', start: 5, end: 6, color: '#00B2A9', cat: 'production', deps: ['1d'], owner: 'Alberto/Tania', addresses: 'Material Flow — $33K' },
-        { id: '3b', name: 'Execute physical move to pick locations', start: 6, end: 8, color: '#00B2A9', cat: 'production', deps: ['3a'], owner: 'Alberto/Tania', addresses: '' },
-        { id: '3c', name: 'Verify PS quantities match physical in locations', start: 7, end: 8.5, color: '#00B2A9', cat: 'production', deps: ['3a'], owner: 'Alberto/Tania + Miguel', addresses: 'Identification Failure — $44K' },
-
-        // Phase 4: Go-Live App de Picking
-        { id: 'p4', phase: 'Phase 4 — Go-Live Picking App', isPhase: true },
-        { id: '4a', name: 'Build scanning app / integration layer', start: 3, end: 6, color: 'var(--beam)', cat: 'dev', deps: ['1c'], owner: 'Miguel', addresses: 'Can start after Phase 1' },
-        { id: '4b', name: 'Barcode scan at pick point', start: 6, end: 7.5, color: 'var(--beam)', cat: 'dev', deps: ['4a','3a'], owner: 'Miguel', addresses: 'Identification Failure — $44K' },
-        { id: '4c', name: 'Auto-register material on pull', start: 7, end: 8.5, color: 'var(--beam)', cat: 'dev', deps: ['4b'], owner: 'Miguel', addresses: 'Material Flow — $33K' },
-        { id: '4d', name: 'PID validation at pull time', start: 8, end: 9.5, color: 'var(--beam)', cat: 'dev', deps: ['4c'], owner: 'Miguel', addresses: 'Process Breakdown — $108K' },
-        { id: '4e', name: 'Dual confirmation (qty + SKU)', start: 9, end: 10, color: 'var(--beam)', cat: 'dev', deps: ['4d'], owner: 'Miguel', addresses: 'Verification Gap — $85K' },
-        { id: '4f', name: 'Pilot with top 5 high-impact SKUs', start: 10, end: 11, color: 'var(--beam)', cat: 'dev', deps: ['4e','3b'], owner: 'Miguel + Production', addresses: 'All root causes' },
-        { id: '4g', name: 'Go-live full rollout', start: 11, end: 12, color: 'var(--beam)', cat: 'dev', deps: ['4f'], owner: 'Miguel', addresses: '$270K target' },
-
-        // Phase 5: Ongoing
-        { id: 'p5', phase: 'Phase 5 — Ongoing: Maintain + Bin-to-Bin Restock', isPhase: true },
-        { id: '5a', name: 'Define restock triggers & bin-to-bin transfers', start: 11, end: 12.5, color: '#4CAF50', cat: 'ops', deps: ['4f','2a2','2b2'], owner: 'Production', addresses: '' },
-        { id: '5b', name: 'Continuous monitoring & variance tracking', start: 12, end: 14, color: '#4CAF50', cat: 'ops', deps: ['4g'], owner: 'Production + Miguel', addresses: 'All root causes — $270K' },
-    ];
-
-    function renderGantt() {
         const container = document.getElementById('pickingGantt');
-        let html = '';
+        // Find date range
+        const dates = data.filter(t => t.start).map(t => new Date(t.start));
+        const endDates = data.filter(t => t.end).map(t => new Date(t.end));
+        const minDate = new Date(Math.min(...dates));
+        const maxDate = new Date(Math.max(...endDates));
+        const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
 
-        // Header
-        html += '<div class="gantt-header">';
-        html += '<div class="gantt-label-col">Task</div>';
-        html += '<div class="gantt-timeline-col">';
-        ganttWeeks.forEach(w => { html += `<div class="gantt-week">${w}</div>`; });
+        // Generate week labels
+        const weeks = [];
+        let d = new Date(minDate);
+        while (d <= maxDate) {
+            weeks.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            d.setDate(d.getDate() + 7);
+        }
+
+        let html = '<div class="gantt-header"><div class="gantt-label-col">Task</div><div class="gantt-timeline-col">';
+        weeks.forEach(w => { html += `<div class="gantt-week">${w}</div>`; });
         html += '</div></div>';
 
-        // Rows
-        ganttTasks.forEach(task => {
-            if (task.isPhase) {
+        let lastPhase = '';
+        data.forEach(task => {
+            if (task.phase !== lastPhase) {
                 html += `<div class="gantt-phase-label">${task.phase}</div>`;
-                return;
+                lastPhase = task.phase;
             }
-            const leftPct = (task.start / totalWeeks * 100).toFixed(2);
-            const widthPct = ((task.end - task.start) / totalWeeks * 100).toFixed(2);
-            const ownerTag = task.owner
-                ? `<span class="dep-tag">${task.owner}</span>`
-                : '';
-            const addressTag = task.addresses
-                ? `<span style="font-size:9px;color:var(--beam);background:rgba(0,163,225,0.1);padding:2px 6px;border-radius:3px;font-weight:500;">${task.addresses}</span>`
-                : '';
+            if (!task.start) return;
+            const startDay = Math.ceil((new Date(task.start) - minDate) / 86400000);
+            const dur = task.end ? Math.ceil((new Date(task.end) - new Date(task.start)) / 86400000) + 1 : 1;
+            const leftPct = (startDay / totalDays * 100).toFixed(2);
+            const widthPct = (dur / totalDays * 100).toFixed(2);
+            const statusIcon = task.status === 'Done' ? '✓ ' : task.blocker ? '⚠ ' : '';
+            const opacity = task.status === 'Done' ? 'opacity:0.6;' : '';
 
             html += `<div class="gantt-row">
                 <div class="gantt-row-label">
-                    <span style="color:var(--text-muted);font-size:10px;font-weight:600;width:24px;flex-shrink:0;">${task.id}</span>
-                    <span style="flex:1;">${task.name}</span>
-                    ${ownerTag}
-                    ${addressTag}
+                    <span style="flex:1;">${statusIcon}${task.name}</span>
+                    <span class="dep-tag">${task.owner}</span>
                 </div>
                 <div class="gantt-row-bars">
-                    <div class="gantt-bar" style="left:${leftPct}%;width:${widthPct}%;background:${task.color};" title="${task.name} (${ganttWeeks[task.start]}–${ganttWeeks[task.end-1]})${task.addresses ? '\n→ ' + task.addresses : ''}">
-                        ${ganttWeeks[task.start]}–${ganttWeeks[task.end-1]}
+                    <div class="gantt-bar" style="left:${leftPct}%;width:${Math.max(parseFloat(widthPct), 1.5)}%;background:${task.color};${opacity}" title="${task.name}\n${task.start} → ${task.end || 'ongoing'}\nOwner: ${task.owner}">
+                        ${dur}d
                     </div>
                 </div>
             </div>`;
         });
 
         container.innerHTML = html;
+        document.getElementById('ganttSource').textContent = 'Source: Monday.com board — Picking App Implementation Gantt';
     }
-    renderGantt();
+    loadGantt();
 
     // ===== API & DYNAMIC DATA =====
     const API = '/.netlify/functions/data';

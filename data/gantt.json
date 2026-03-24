@@ -1,0 +1,16 @@
+[
+  {"id":"11571175400","name":"Confirm date with IT Peter","phase":"Phase 1","owner":"Miguel","status":"Done","start":"2026-03-23","end":"2026-03-23","duration":0,"color":"#4CAF50"},
+  {"id":"11571211863","name":"Massive upload pick locations to PS","phase":"Phase 1","owner":"IT — Peter Winter","status":"Working on it","start":"2026-03-24","end":"2026-03-26","duration":3,"color":"#EF5350","blocker":true},
+  {"id":"11571195659","name":"Issue to Kit change in PS","phase":"Phase 2A","owner":"IT — Michael Fagan","status":"Pending","start":"2026-03-27","end":"2026-03-27","duration":1,"color":"#7E57C2"},
+  {"id":"11571210590","name":"Validate kit structure matches BOM","phase":"Phase 2A","owner":"Miguel","status":"Pending","start":"2026-03-28","end":"2026-03-28","duration":1,"color":"#7E57C2"},
+  {"id":"11571229619","name":"Finance structure change","phase":"Phase 2B","owner":"Finance","status":"Pending","start":"2026-03-27","end":"2026-03-27","duration":1,"color":"#FFA726"},
+  {"id":"11571196718","name":"Update cost allocation","phase":"Phase 2B","owner":"Finance","status":"Pending","start":"2026-03-28","end":"2026-03-28","duration":1,"color":"#FFA726"},
+  {"id":"11577189590","name":"Plan material movement","phase":"Phase 3","owner":"Albert Gomez","status":"Pending","start":"2026-03-27","end":"2026-03-28","duration":2,"color":"#00B2A9"},
+  {"id":"11577170787","name":"Execute physical move to pick locations","phase":"Phase 3","owner":"Albert Gomez","status":"Pending","start":"2026-03-29","end":"2026-03-31","duration":3,"color":"#00B2A9"},
+  {"id":"11577170788","name":"Verify PS vs physical in pick locations","phase":"Phase 3","owner":"Albert Gomez + Miguel","status":"Pending","start":"2026-04-01","end":"2026-04-01","duration":1,"color":"#00B2A9"},
+  {"id":"11577160930","name":"Pilot with top 5 high-impact SKUs","phase":"Phase 4","owner":"Miguel","status":"Pending","start":"2026-04-02","end":"2026-04-02","duration":1,"color":"#00A3E1"},
+  {"id":"11577160738","name":"Go-live full rollout","phase":"Phase 4","owner":"Miguel","status":"Pending","start":"2026-04-03","end":"2026-04-03","duration":1,"color":"#00A3E1"},
+  {"id":"11577177369","name":"Expand to additional product families","phase":"Phase 5","owner":"Production","status":"Pending","start":"2026-04-03","end":"2026-04-07","duration":5,"color":"#4CAF50"},
+  {"id":"11577160914","name":"Cycle count monitoring","phase":"Phase 5","owner":"Production","status":"Pending","start":"2026-04-04","end":"2026-04-06","duration":3,"color":"#4CAF50"},
+  {"id":"maintain","name":"Maintain the System","phase":"Phase 5","owner":"Production","status":"Ongoing","start":"2026-04-07","end":null,"duration":null,"color":"#4CAF50"}
+]
