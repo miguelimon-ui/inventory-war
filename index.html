@@ -365,59 +365,17 @@
     <div class="main">
         <!-- LEVEL 1: Executive Summary -->
         <div id="overview" class="section active">
-            <div class="kpi-row">
-                <div class="kpi">
-                    <div class="kpi-label">Total Gap Analyzed</div>
-                    <div class="kpi-value red">$344K</div>
-                    <div class="kpi-sub">Top 20% SKUs = ~80% of impact</div>
-                </div>
-                <div class="kpi">
-                    <div class="kpi-label">Root Causes</div>
-                    <div class="kpi-value accent">6</div>
-                    <div class="kpi-sub">Systemic issues identified</div>
-                </div>
-                <div class="kpi">
-                    <div class="kpi-label">Active Actions</div>
-                    <div class="kpi-value green">12</div>
-                    <div class="kpi-sub">of 25 total</div>
-                </div>
-                <div class="kpi">
-                    <div class="kpi-label">Pending Actions</div>
-                    <div class="kpi-value orange">13</div>
-                    <div class="kpi-sub">to be implemented</div>
-                </div>
-            </div>
-
+            <div class="kpi-row" id="overviewKpis"></div>
             <div class="card">
                 <div class="card-title">Core Insight</div>
                 <p style="font-size: 18px; line-height: 1.5; max-width: 700px; font-weight: 300; letter-spacing: -0.01em;">
                     The problem <strong style="color: #EF5350; font-weight: 600;">is not inventory</strong>. It's <strong style="color: var(--beam); font-weight: 600;">flow control</strong>.
-                    Discrepancies are symptoms of operational system failures — the physical flow doesn't match the system flow.
+                    We measure <strong style="color: var(--beam);">leading indicators</strong> — weekly trends that tell us if actions are working before the money shows it.
                 </p>
             </div>
-
-            <div class="card">
-                <div class="card-title">Breakdown by Root Cause — Click to expand</div>
-                <div class="rc-list" id="rcList"></div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Weekly Alerts</div>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="alert alert-error">
-                        <strong style="color: #EF5350;">Trufig Worsening</strong>
-                        <span> — Short PIDs increased from 27 to 47 over 6 weeks. Process Breakdown is not being contained.</span>
-                    </div>
-                    <div class="alert alert-warning">
-                        <strong style="color: var(--orange);">Transfer Needed Rising</strong>
-                        <span> — From 0 to 6 lines. Material Flow Issues growing silently.</span>
-                    </div>
-                    <div class="alert alert-success">
-                        <strong style="color: #4CAF50;">Adj Requested Controlled</strong>
-                        <span> — Dropped from 20 to 1. Verification Gap is responding to the cycle count program.</span>
-                    </div>
-                </div>
-            </div>
+            <div id="rootCauseCards"></div>
+            <!-- Drill-down detail panel (hidden until click) -->
+            <div id="rcDetail" style="display:none;"></div>
         </div>
 
         <!-- Pareto Detail -->
@@ -597,100 +555,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
     // ===== DATA =====
-    const rootCauses = [
-        {
-            name: "Process Breakdown",
-            amount: 108000,
-            color: "#EF5350",
-            description: "PIDs not completing. No defined steps in the physical flow to register in the system.",
-            items: "60051 (QX806BE), 60546 (SA63-7-ENC-STD), 60069 (SA63-7-ENC), 60423 (QX1020)",
-            w2w: "PIDs with FG — $47K + $33K + $15K + $6.4K + $6.2K",
-            monitoring: "Short PID Pareto (Trufig, PID Requested)",
-            actions: [
-                { action: "Short PID tracking — Trufig", status: "alert", monitoring: "Weekly trend chart", trend: "27→47 ↑" },
-                { action: "Short PID tracking — PID Requested", status: "active", monitoring: "Weekly trend chart", trend: "13→1 ↓" },
-                { action: "Define Trufig PID flow (migrate to standard)", status: "active", monitoring: "PeopleSoft Workflow board", trend: "In progress" },
-                { action: "Validate completed PIDs vs physical FG", status: "pending", monitoring: "—", trend: "—" }
-            ]
-        },
-        {
-            name: "Verification Gap",
-            amount: 85000,
-            color: "#FFA726",
-            description: "Manual adjustments without dual validation. Relying on memory with no mandatory checkpoints.",
-            items: "60398 (SA8.5-GRILLE-R-SR), CAB.AL.SA54-4, 60397, 60423, 60395",
-            w2w: "Wrong Adjustment — $36K + $17K + $11K + $7.7K + $7.4K + $6.7K",
-            monitoring: "Cycle Count Pareto (Adj Requested)",
-            actions: [
-                { action: "Short PID tracking — Adj Requested", status: "active", monitoring: "Weekly trend chart", trend: "20→1 ↓" },
-                { action: "Cycle count program (dual validation)", status: "active", monitoring: "Cycle Count Pareto", trend: "18 instances / 8 wks" },
-                { action: "Approval process for manual adjustments", status: "pending", monitoring: "—", trend: "—" },
-                { action: "SOP for PeopleSoft adjustments", status: "pending", monitoring: "—", trend: "—" }
-            ]
-        },
-        {
-            name: "System Misalignment",
-            amount: 45000,
-            color: "#7E57C2",
-            description: "PeopleSoft and Monday don't reflect the same reality. PS processes generate errors.",
-            items: "GRILL.AL.CUSTOM, various transfers",
-            w2w: "Process Issue $24K + Incorrect transfer $13K + 2025 Error $8K",
-            monitoring: "Cycle Count Pareto (PS Error, Transfer Missed)",
-            actions: [
-                { action: "Cycle count — PeopleSoft Error", status: "active", monitoring: "Cycle Count Pareto", trend: "4 instances" },
-                { action: "Cycle count — Transfer Missed", status: "active", monitoring: "Cycle Count Pareto", trend: "4 instances" },
-                { action: "Short PID tracking — Incorrect BOM", status: "active", monitoring: "Weekly trend chart", trend: "0→5→1 ~" },
-                { action: "Review order cancellation process in PS", status: "pending", monitoring: "—", trend: "—" },
-                { action: "Real-time Monday ↔ PS sync", status: "pending", monitoring: "—", trend: "—" }
-            ]
-        },
-        {
-            name: "Identification Failure",
-            amount: 44000,
-            color: "#F9A825",
-            description: "Incorrect tags, grilles counted as FG, confusing nomenclature, no barcode/scanning.",
-            items: "DRV.10.002.2, 60059 (QXC820S), SCREW ADJUSTMENT S3",
-            w2w: "Control Point $20K + Grilles as FG $9K + Tags $16K",
-            monitoring: "Cycle Count Pareto (Labeling & Nomenclature)",
-            actions: [
-                { action: "Cycle count — Labeling & Nomenclature", status: "active", monitoring: "Cycle Count Pareto", trend: "4 instances" },
-                { action: "Short PID tracking — Count Requested", status: "active", monitoring: "Weekly trend chart", trend: "26→4 ↓" },
-                { action: "Standardize grille vs FG labeling", status: "pending", monitoring: "—", trend: "—" },
-                { action: "Evaluate barcode/scanning at critical points", status: "pending", monitoring: "—", trend: "—" }
-            ]
-        },
-        {
-            name: "Material Flow Issues",
-            amount: 33000,
-            color: "#00B2A9",
-            description: "Material moved without tracking. WIP floating without ownership.",
-            items: "CAB.SA853-6-ENC, CAB.AL.SAS42-4, MISC.MAGNET.CUP",
-            w2w: "SKU transfers $28K + WIP grilles kitted $9K",
-            monitoring: "Short PID Pareto (WIP Error, Transfer Needed)",
-            actions: [
-                { action: "Short PID tracking — WIP Error", status: "alert", monitoring: "Weekly trend chart", trend: "15→49→35 ~" },
-                { action: "Short PID tracking — Transfer Needed", status: "active", monitoring: "Weekly trend chart", trend: "0→6 ↑" },
-                { action: "Identify floating WIP without ownership", status: "pending", monitoring: "—", trend: "—" },
-                { action: "SKU transfer process on product migration", status: "pending", monitoring: "—", trend: "—" }
-            ]
-        },
-        {
-            name: "Training / Standardization",
-            amount: 29000,
-            color: "#42A5F5",
-            description: "Tribal knowledge. No formal SOPs. Inconsistent execution.",
-            items: "OT88 Housing, Scrap items",
-            w2w: "OT88 $9.4K + Scrap Process $7.8K + Short PIDs $6.5K",
-            monitoring: "Cycle Count Pareto (BOM Review Requested)",
-            actions: [
-                { action: "Cycle count — BOM Review Requested", status: "active", monitoring: "Cycle Count Pareto", trend: "3 instances" },
-                { action: "Document receiving process (OT88 case)", status: "pending", monitoring: "—", trend: "—" },
-                { action: "Scrap process SOP", status: "pending", monitoring: "—", trend: "—" },
-                { action: "Operator training on control points", status: "pending", monitoring: "—", trend: "—" }
-            ]
-        }
-    ];
-
     const paretoItems = [
         { sku: "60051", desc: "QX806BE", ps: 46973, actual: 3850, dif: 43123 },
         { sku: "60383", desc: "AMP.100X2.PCB", ps: 0, actual: 40696, dif: -40696 },
@@ -744,38 +608,6 @@
 
     // ===== RENDER =====
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-    // Root causes — expandable inline in overview
-    const totalAmount = rootCauses.reduce((s, rc) => s + rc.amount, 0);
-    document.getElementById('rcList').innerHTML = rootCauses.map((rc, idx) => {
-        const pct = (rc.amount / totalAmount * 100).toFixed(1);
-        const actionsHtml = rc.actions.map(a => `<tr class="action-row" data-status="${a.status}">
-            <td>${a.action}</td>
-            <td><span class="status-badge status-${a.status}">${a.status === 'alert' ? 'ALERT' : a.status === 'active' ? 'ACTIVE' : 'PENDING'}</span></td>
-            <td>${a.monitoring}</td>
-            <td class="${a.trend.includes('↑') ? 'trend-up' : a.trend.includes('↓') ? 'trend-down' : 'trend-stable'}">${a.trend}</td>
-        </tr>`).join('');
-
-        return `<div class="rc-item" onclick="this.classList.toggle('expanded')">
-            <div class="rc-header">
-                <div>
-                    <div class="rc-name" style="color: ${rc.color}">${rc.name}</div>
-                    <div class="rc-meta"><span>${rc.monitoring}</span></div>
-                </div>
-                <div class="rc-amount" style="color: ${rc.color}">$${(rc.amount/1000).toFixed(0)}K</div>
-            </div>
-            <div class="rc-bar-bg"><div class="rc-bar" style="width: ${pct}%; background: ${rc.color}"></div></div>
-            <div class="rc-details">
-                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">${rc.description}</p>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;"><strong style="color: var(--text-secondary);">W2W:</strong> ${rc.w2w}</p>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;"><strong style="color: var(--text-secondary);">Items:</strong> ${rc.items}</p>
-                <table class="actions-table">
-                    <thead><tr><th>Action</th><th>Status</th><th>Monitoring</th><th>Trend</th></tr></thead>
-                    <tbody>${actionsHtml}</tbody>
-                </table>
-            </div>
-        </div>`;
-    }).join('');
 
     // Pareto chart
     const maxDif = Math.max(...paretoItems.map(p => Math.abs(p.dif)));
@@ -1103,6 +935,199 @@
         </div>`;
     }
     loadPareto();
+
+    // ===== ROOT CAUSES WITH LEADING INDICATORS =====
+    let rootCausesData = [];
+    let selectedRC = null;
+
+    async function loadRootCauses() {
+        const data = await apiGet('root_causes');
+        if (!data) return;
+        rootCausesData = data;
+        renderOverview();
+    }
+
+    function getStatusColor(status) {
+        if (status === 'controlled') return '#4CAF50';
+        if (status === 'worse') return '#EF5350';
+        if (status === 'rising') return '#F57C00';
+        if (status === 'volatile') return '#F9A825';
+        if (status === 'new_tracking') return 'var(--text-muted)';
+        return 'var(--text-muted)';
+    }
+
+    function getStatusLabel(status) {
+        if (status === 'controlled') return '\u2713 CONTROLLED';
+        if (status === 'worse') return '\u2191 GETTING WORSE';
+        if (status === 'rising') return '\u2191 RISING';
+        if (status === 'volatile') return '~ VOLATILE';
+        if (status === 'new_tracking') return '\u25CB NEW TRACKING';
+        return status;
+    }
+
+    function miniSparkline(data, color, goal) {
+        if (!data || data.length < 2) return '<span style="color:var(--text-muted);font-size:11px;">No data yet</span>';
+        const max = Math.max(...data, goal || 0);
+        const min = Math.min(...data, 0);
+        const range = max - min || 1;
+        const w = 120, h = 32;
+        const points = data.map((v, i) => {
+            const x = (i / (data.length - 1)) * w;
+            const y = h - ((v - min) / range) * h;
+            return `${x},${y}`;
+        }).join(' ');
+        let goalLine = '';
+        if (goal !== null && goal !== undefined) {
+            const gy = h - ((goal - min) / range) * h;
+            goalLine = `<line x1="0" y1="${gy}" x2="${w}" y2="${gy}" stroke="#4CAF50" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>`;
+        }
+        const last = data[data.length - 1];
+        return `<svg width="${w}" height="${h}" style="vertical-align:middle;">
+            ${goalLine}
+            <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2"/>
+            <circle cx="${(data.length - 1) / (data.length - 1) * w}" cy="${h - ((last - min) / range) * h}" r="3" fill="${color}"/>
+        </svg> <span style="font-size:14px;font-weight:600;color:${color};">${last}</span>`;
+    }
+
+    function renderOverview() {
+        // KPI cards
+        const totalActions = rootCausesData.reduce((s, rc) => s + rc.actions.length, 0);
+        const doneActions = rootCausesData.reduce((s, rc) => s + rc.actions.filter(a => a.status === 'done').length, 0);
+        const alertCount = rootCausesData.reduce((s, rc) => s + rc.leading_indicators.filter(li => li.status === 'worse' || li.status === 'rising').length, 0);
+        const controlledCount = rootCausesData.reduce((s, rc) => s + rc.leading_indicators.filter(li => li.status === 'controlled').length, 0);
+
+        document.getElementById('overviewKpis').innerHTML = `
+            <div class="kpi"><div class="kpi-label">Root Causes</div><div class="kpi-value accent">${rootCausesData.length}</div><div class="kpi-sub">From W2W Pareto analysis</div></div>
+            <div class="kpi"><div class="kpi-label">Actions</div><div class="kpi-value green">${doneActions}/${totalActions}</div><div class="kpi-sub">completed</div></div>
+            <div class="kpi"><div class="kpi-label">Indicators Controlled</div><div class="kpi-value green">${controlledCount}</div><div class="kpi-sub">trending in right direction</div></div>
+            <div class="kpi"><div class="kpi-label">Alerts</div><div class="kpi-value ${alertCount > 0 ? 'red' : 'green'}">${alertCount}</div><div class="kpi-sub">indicators getting worse</div></div>
+        `;
+
+        // Root cause cards
+        document.getElementById('rootCauseCards').innerHTML = rootCausesData.map((rc, idx) => {
+            const worstIndicator = rc.leading_indicators.reduce((worst, li) => {
+                const priority = { worse: 4, rising: 3, volatile: 2, new_tracking: 1, controlled: 0 };
+                return (priority[li.status] || 0) > (priority[worst.status] || 0) ? li : worst;
+            }, rc.leading_indicators[0]);
+
+            const statusColor = getStatusColor(worstIndicator ? worstIndicator.status : 'new_tracking');
+            const doneCount = rc.actions.filter(a => a.status === 'done').length;
+
+            const indicatorsHtml = rc.leading_indicators.map(li => {
+                const liColor = getStatusColor(li.status);
+                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:11px;color:var(--text-muted);width:130px;">${li.name}</span>
+                    ${miniSparkline(li.data, liColor, li.goal)}
+                    <span style="font-size:10px;color:${liColor};font-weight:600;margin-left:auto;">${getStatusLabel(li.status)}</span>
+                </div>`;
+            }).join('');
+
+            return `<div class="card" style="cursor:pointer;border-left:4px solid ${statusColor};margin-bottom:12px;transition:all 0.2s;" onclick="showRCDetail(${idx})" onmouseover="this.style.borderColor='var(--beam)'" onmouseout="this.style.borderColor='${statusColor}'">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <div style="font-size:16px;font-weight:600;letter-spacing:-0.01em;">${rc.short_name}</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${rc.description}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:11px;color:var(--text-muted);">W2W ref: $${(rc.lagging.w2w_impact/1000).toFixed(0)}K (${rc.lagging.pct_of_analyzed}%)</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${doneCount}/${rc.actions.length} actions done</div>
+                    </div>
+                </div>
+                <div style="margin-top:12px;">${indicatorsHtml}</div>
+                <div style="margin-top:8px;font-size:11px;color:var(--beam);font-weight:500;">Click to see actions \u2192</div>
+            </div>`;
+        }).join('');
+    }
+
+    function showRCDetail(idx) {
+        selectedRC = idx;
+        const rc = rootCausesData[idx];
+        const statusColor = getStatusColor(rc.leading_indicators[0]?.status || 'new_tracking');
+
+        // Leading indicators with full charts
+        const indicatorsHtml = rc.leading_indicators.map(li => {
+            const liColor = getStatusColor(li.status);
+            const current = li.data.length ? li.data[li.data.length - 1] : '\u2014';
+            const baseline = li.data.length ? li.data[0] : '\u2014';
+            return `<div class="card" style="border-left:3px solid ${liColor};">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:14px;font-weight:600;">${li.name}</div>
+                        <div style="font-size:12px;color:${liColor};font-weight:600;margin-top:4px;">${getStatusLabel(li.status)}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:11px;color:var(--text-muted);">Baseline: ${baseline} \u2192 Current: <strong style="color:${liColor};">${current}</strong> \u2192 Goal: ${li.goal !== null ? li.goal : 'TBD'}</div>
+                    </div>
+                </div>
+                <div style="margin-top:12px;">${miniSparkline(li.data, liColor, li.goal)}</div>
+                ${li.data.length ? `<div style="margin-top:8px;font-size:10px;color:var(--text-muted);">Weeks: ${li.weeks.join(' \u2192 ')}</div>` : ''}
+            </div>`;
+        }).join('');
+
+        // Actions for this root cause
+        const actionsHtml = rc.actions.map(a => {
+            const si = { pending: {badge:'PENDING',cls:'status-pending'}, active: {badge:'ACTIVE',cls:'status-active'}, alert: {badge:'ALERT',cls:'status-alert'}, done: {badge:'DONE',cls:'status-active'} };
+            const s = si[a.status] || si.pending;
+            const kpiMatch = rc.leading_indicators.find(li => li.name === a.kpi);
+            const kpiColor = kpiMatch ? getStatusColor(kpiMatch.status) : 'var(--text-muted)';
+
+            let progressHtml = '';
+            if (a.baseline !== null && a.target !== null && a.current !== null) {
+                const range = Math.abs(a.baseline - a.target) || 1;
+                const progress = Math.min(100, Math.max(0, Math.abs(a.baseline - a.current) / range * 100));
+                const isGoingRight = (a.target < a.baseline) ? (a.current <= a.baseline) : (a.current >= a.baseline);
+                const barColor = isGoingRight ? '#4CAF50' : '#EF5350';
+                progressHtml = `<div style="margin-top:8px;">
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px;">
+                        <span>Baseline: ${a.baseline}</span><span>Current: <strong style="color:${barColor};">${a.current}</strong></span><span>Target: ${a.target}</span>
+                    </div>
+                    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                        <div style="height:100%;width:${progress}%;background:${barColor};border-radius:3px;"></div>
+                    </div>
+                </div>`;
+            }
+
+            return `<div style="padding:12px;background:var(--surface2);border-radius:6px;margin-bottom:8px;${a.status === 'done' ? 'opacity:0.6;' : ''}">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="status-badge ${s.cls}">${s.badge}</span>
+                    <span style="flex:1;font-size:13px;${a.status === 'done' ? 'text-decoration:line-through;' : ''}">${a.title}</span>
+                    <span class="dep-tag">${a.owner}</span>
+                </div>
+                ${a.kpi ? `<div style="margin-top:6px;font-size:11px;"><span style="color:var(--text-muted);">KPI:</span> <span style="color:${kpiColor};font-weight:500;">${a.kpi}</span></div>` : ''}
+                ${progressHtml}
+            </div>`;
+        }).join('');
+
+        document.getElementById('rcDetail').style.display = 'block';
+        document.getElementById('rcDetail').innerHTML = `
+            <div style="margin-bottom:16px;">
+                <button onclick="hideRCDetail()" style="background:none;border:none;color:var(--beam);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;padding:0;">\u2190 Back to Overview</button>
+            </div>
+            <div class="card" style="border-left:4px solid ${statusColor};">
+                <div style="font-size:22px;font-weight:600;letter-spacing:-0.02em;">${rc.name}</div>
+                <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">${rc.description}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">W2W Reference: $${(rc.lagging.w2w_impact/1000).toFixed(0)}K (${rc.lagging.pct_of_analyzed}% of analyzed)</div>
+            </div>
+            <div class="card-title" style="margin-top:24px;margin-bottom:12px;">Leading Indicators</div>
+            ${indicatorsHtml}
+            <div class="card-title" style="margin-top:24px;margin-bottom:12px;">Actions (${rc.actions.filter(a=>a.status==='done').length}/${rc.actions.length} done)</div>
+            ${actionsHtml}
+        `;
+        document.getElementById('rootCauseCards').style.display = 'none';
+        document.querySelector('#overview .kpi-row').style.display = 'none';
+        document.querySelector('#overview .card').style.display = 'none';
+        window.scrollTo(0, 0);
+    }
+
+    function hideRCDetail() {
+        document.getElementById('rcDetail').style.display = 'none';
+        document.getElementById('rootCauseCards').style.display = '';
+        document.querySelector('#overview .kpi-row').style.display = '';
+        document.querySelector('#overview .card').style.display = '';
+        selectedRC = null;
+    }
+
+    loadRootCauses();
 
     // ===== MEETING MODE =====
     function getOwnerCard(id) {
