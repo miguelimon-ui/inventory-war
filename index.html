@@ -371,6 +371,7 @@
         <button class="nav-btn" onclick="showSection('picking')">Picking</button>
         <button class="nav-btn" onclick="showSection('actions')">All Actions</button>
         <button class="nav-btn" onclick="showSection('team')">Team</button>
+        <button class="nav-btn" onclick="showSection('bomreviews')">BOM Reviews</button>
         <button class="nav-btn" onclick="showSection('kits')">Kits</button>
     </div>
 
@@ -534,6 +535,20 @@
             </div>
             <div class="team-grid" id="teamGrid">
                 <div style="color:var(--text-muted);padding:40px;text-align:center;">Loading team data...</div>
+            </div>
+        </div>
+
+        <!-- BOM Reviews -->
+        <div id="bomreviews" class="section">
+            <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div class="card-title" style="margin-bottom:4px;">BOM Reviews — Asana Integration</div>
+                    <p style="color:var(--text-muted);font-size:12px;margin:0;">Tasks synced from Asana project: Master Data/IT Minden Tasks</p>
+                </div>
+                <button onclick="loadBOMReviews()" style="padding:8px 16px;border:1px solid var(--beam);background:transparent;color:var(--beam);cursor:pointer;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;text-transform:uppercase;letter-spacing:0.05em;">Refresh from Asana</button>
+            </div>
+            <div id="bomReviewsList" style="margin-top:12px;">
+                <div style="color:var(--text-muted);padding:40px;text-align:center;">Click "Refresh from Asana" to load BOM Review tasks</div>
             </div>
         </div>
 
@@ -869,9 +884,10 @@
         const statusInfo = { pending: { icon: '☐', badge: 'PENDING', cls: 'status-pending', liCls: '' }, active: { icon: '▶', badge: 'ACTIVE', cls: 'status-active', liCls: '' }, alert: { icon: '⚠', badge: 'ALERT', cls: 'status-alert', liCls: 'urgent' }, done: { icon: '✓', badge: 'DONE', cls: 'status-active', liCls: 'done' } };
         const actionsHtml = owner.actions.map((a, ai) => {
             const si = statusInfo[a.status] || statusInfo.pending;
-            return `<li class="${si.liCls}" style="display:flex;align-items:center;gap:8px;">
+            return `<li class="${si.liCls}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span class="status-badge ${si.cls} action-clickable" onclick="toggleAction(${idx},${ai})" title="Click to change status: pending → active → alert → done">${si.badge}</span>
-                <span style="flex:1;cursor:text;" onclick="event.stopPropagation();editAction(${idx},${ai})" title="Click to edit">${a.title}${a.blocker ? ` <span style="font-size:10px;color:var(--text-muted);">[blocked: ${a.blocker}]</span>` : ''}${a.root_cause ? ` <span style="font-size:10px;color:var(--beam);">${a.root_cause}</span>` : ''}</span>
+                <span style="flex:1;cursor:text;min-width:200px;" onclick="event.stopPropagation();editAction(${idx},${ai})" title="Click to edit">${a.title}${a.blocker ? ` <span style="font-size:10px;color:var(--text-muted);">[blocked: ${a.blocker}]</span>` : ''}${a.root_cause ? ` <span style="font-size:10px;color:var(--beam);">${a.root_cause}</span>` : ''}</span>
+                ${a.owner ? '<span class="dep-tag">'+a.owner+'</span>' : ''}${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}
                 <span class="action-delete" onclick="deleteAction(${idx},${ai})">×</span>
             </li>`;
         }).join('');
@@ -898,6 +914,18 @@
                 </div>
                 <input type="text" id="form-support-${idx}" placeholder="Support / Facilitator (optional)">
                 <input type="text" id="form-blocker-${idx}" placeholder="Blocker (optional)">
+                <div id="form-asana-${idx}" style="display:none;padding:10px;background:rgba(0,163,225,0.05);border:1px solid rgba(0,163,225,0.15);border-radius:4px;margin-top:4px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--beam);">
+                        <input type="checkbox" id="form-asana-toggle-${idx}" style="accent-color:var(--beam);">
+                        Create task in Asana (Master Data/IT Minden Tasks)
+                    </label>
+                    <div id="form-asana-owner-${idx}" style="display:none;margin-top:8px;">
+                        <select id="form-asana-assignee-${idx}" style="width:100%;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;">
+                            <option value="1213268986324733">Jimmy Gallagher</option>
+                            <option value="1212908514503100">Miguel A Garcia</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="form-ai-${idx}" style="display:none;padding:10px;background:rgba(0,163,225,0.08);border:1px solid rgba(0,163,225,0.2);border-radius:4px;font-size:12px;margin-bottom:8px;">
                     <div style="font-size:10px;color:var(--beam);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">AI Suggestion</div>
                     <div id="form-ai-text-${idx}" style="color:var(--text-secondary);"></div>
@@ -1184,6 +1212,24 @@
         document.getElementById(`form-ai-${idx}`).style.display = 'none';
     }
 
+    // Show/hide Asana toggle based on root cause selection
+    function setupAsanaToggle(idx) {
+        const rcSelect = document.getElementById(`form-rc-${idx}`);
+        const asanaDiv = document.getElementById(`form-asana-${idx}`);
+        const asanaToggle = document.getElementById(`form-asana-toggle-${idx}`);
+        const asanaOwner = document.getElementById(`form-asana-owner-${idx}`);
+        if (!rcSelect || !asanaDiv) return;
+
+        rcSelect.addEventListener('change', () => {
+            const val = rcSelect.value;
+            asanaDiv.style.display = val === 'bom_reviews' ? 'block' : 'none';
+            if (val !== 'bom_reviews') { asanaToggle.checked = false; asanaOwner.style.display = 'none'; }
+        });
+        asanaToggle.addEventListener('change', () => {
+            asanaOwner.style.display = asanaToggle.checked ? 'block' : 'none';
+        });
+    }
+
     function populateRCDropdown(select) {
         if (select.options.length > 1) return; // already populated
         rootCausesData.forEach(rc => {
@@ -1195,7 +1241,7 @@
             });
         });
     }
-    function showAddForm(idx) { document.getElementById(`form-${idx}`).classList.add('show'); document.getElementById(`form-title-${idx}`).focus(); }
+    function showAddForm(idx) { document.getElementById(`form-${idx}`).classList.add('show'); document.getElementById(`form-title-${idx}`).focus(); setupAsanaToggle(idx); }
     function hideAddForm(idx) { const f = document.getElementById(`form-${idx}`); f.classList.remove('show'); delete f.dataset.editIdx; f.querySelectorAll('input').forEach(i => { i.value = ''; i.style.borderColor = ''; }); f.querySelectorAll('select').forEach(s => { s.selectedIndex = 0; s.style.borderColor = ''; }); }
 
     function editAction(ownerIdx, actionIdx) {
@@ -1232,6 +1278,21 @@
         } else {
             ownersData[idx].actions.push(actionData);
         }
+
+        // Create in Asana if toggled
+        const asanaToggle = document.getElementById(`form-asana-toggle-${idx}`);
+        if (asanaToggle && asanaToggle.checked) {
+            const assigneeGid = document.getElementById(`form-asana-assignee-${idx}`).value;
+            try {
+                const r = await fetch('/api/asana-task', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ title, assignee: assigneeGid, kpi, root_cause: rc })
+                });
+                const result = await r.json();
+                if (result.ok) actionData.asana_gid = result.task_gid;
+            } catch(e) { console.log('Asana create failed:', e); }
+        }
+
         renderTeamGrid();
         await apiPut('owners', ownersData);
     }
@@ -1754,6 +1815,36 @@
     }
 
     loadRootCauses();
+
+    // ===== BOM REVIEWS — Asana Integration =====
+    async function loadBOMReviews() {
+        const container = document.getElementById('bomReviewsList');
+        container.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center;">Loading from Asana...</div>';
+        try {
+            const r = await fetch('/api/asana-tasks');
+            const data = await r.json();
+            if (!data.tasks || !data.tasks.length) {
+                container.innerHTML = '<div style="color:var(--text-muted);padding:40px;text-align:center;">No BOM Review tasks found in Asana</div>';
+                return;
+            }
+            container.innerHTML = data.tasks.map(t => {
+                const isDone = t.completed;
+                const statusCls = isDone ? 'status-active' : (t.due_on && new Date(t.due_on) < new Date() ? 'status-alert' : 'status-pending');
+                const statusLabel = isDone ? 'DONE' : (t.due_on && new Date(t.due_on) < new Date() ? 'OVERDUE' : 'OPEN');
+                return `<div class="card" style="margin-bottom:8px;${isDone ? 'opacity:0.6;' : ''}border-left:3px solid ${isDone ? '#4CAF50' : '#7E57C2'};">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="status-badge ${statusCls}">${statusLabel}</span>
+                        <span style="flex:1;font-size:13px;${isDone ? 'text-decoration:line-through;' : ''}">${t.name}</span>
+                        ${t.assignee ? '<span class="dep-tag">' + t.assignee.name + '</span>' : ''}
+                        ${t.due_on ? '<span style="font-size:11px;color:var(--text-muted);">Due: ' + t.due_on + '</span>' : ''}
+                    </div>
+                    ${t.notes ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);">' + t.notes.substring(0,150) + (t.notes.length > 150 ? '...' : '') + '</div>' : ''}
+                </div>`;
+            }).join('');
+        } catch(e) {
+            container.innerHTML = '<div style="color:#EF5350;padding:20px;">Error loading from Asana: ' + e.message + '</div>';
+        }
+    }
 
     // Load cycle count data from blob on startup
     async function loadCycleCount() {

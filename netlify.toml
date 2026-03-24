@@ -14,3 +14,13 @@
   from = "/api/smart-suggest"
   to = "/.netlify/functions/smart-suggest"
   status = 200
+
+[[redirects]]
+  from = "/api/asana-task"
+  to = "/.netlify/functions/asana-task"
+  status = 200
+
+[[redirects]]
+  from = "/api/asana-tasks"
+  to = "/.netlify/functions/asana-tasks"
+  status = 200

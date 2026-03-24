@@ -91,9 +91,9 @@
         ]
       },
       {
-        "id": "stock_migration",
-        "name": "Stock Not Migrated to New SKU or Revision",
-        "description": "Product physically used for new SKU but system not updated.",
+        "id": "bom_reviews",
+        "name": "BOM Reviews",
+        "description": "BOM verification, legacy component deactivation, stock not migrated to new SKU.",
         "lagging": { "w2w_impact": 47000, "items": 3 },
         "leading_indicators": [
           { "name": "SKUs Pending Deactivation", "weeks": [], "data": [], "goal": 0, "direction": "down", "status": "new_tracking" },
