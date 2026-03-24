@@ -941,10 +941,18 @@
     let selectedRC = null;
 
     async function loadRootCauses() {
-        const data = await apiGet('root_causes');
-        if (!data) return;
-        rootCausesData = data;
-        renderOverview();
+        try {
+            document.getElementById('rootCauseCards').innerHTML = '<div style="color:var(--text-muted);padding:20px;">Loading root causes...</div>';
+            const data = await apiGet('root_causes');
+            if (!data || !data.length) {
+                document.getElementById('rootCauseCards').innerHTML = '<div style="color:#EF5350;padding:20px;">Error: No root cause data from API</div>';
+                return;
+            }
+            rootCausesData = data;
+            renderOverview();
+        } catch(e) {
+            document.getElementById('rootCauseCards').innerHTML = '<div style="color:#EF5350;padding:20px;">Error loading: ' + e.message + '</div>';
+        }
     }
 
     function getStatusColor(status) {
@@ -990,6 +998,7 @@
     }
 
     function renderOverview() {
+      try {
         // KPI cards
         const totalActions = rootCausesData.reduce((s, rc) => s + rc.actions.length, 0);
         const doneActions = rootCausesData.reduce((s, rc) => s + rc.actions.filter(a => a.status === 'done').length, 0);
@@ -1037,6 +1046,9 @@
                 <div style="margin-top:8px;font-size:11px;color:var(--beam);font-weight:500;">Click to see actions \u2192</div>
             </div>`;
         }).join('');
+      } catch(e) {
+        document.getElementById('rootCauseCards').innerHTML = '<div style="color:#EF5350;padding:20px;">Render error: ' + e.message + '</div>';
+      }
     }
 
     function showRCDetail(idx) {
