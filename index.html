@@ -42,6 +42,17 @@
             min-height: 100vh;
             font-weight: 400;
             line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.light {
+            --bg: #F5F5F5;
+            --surface: #FFFFFF;
+            --surface2: #FAFAFA;
+            --elevated: #EEEEEE;
+            --border: #E0E0E0;
+            --text: #333F48;
+            --text-secondary: #555;
+            --text-muted: #888;
         }
 
         /* Header */
@@ -346,8 +357,9 @@
             <div class="subtitle">Wall-to-Wall 2025 — Pareto Mitigation Tracker</div>
             <div class="beam-accent"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:16px;">
+        <div style="display:flex;align-items:center;gap:12px;">
             <button class="present-btn" onclick="startMeeting()">▶ Present</button>
+            <button onclick="toggleTheme()" style="background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;border-radius:4px;padding:6px 10px;font-size:14px;" title="Toggle light/dark" id="themeBtn">☀</button>
             <div class="date" id="currentDate"></div>
         </div>
     </div>
@@ -617,6 +629,15 @@
 
     // ===== RENDER =====
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Theme toggle
+    function toggleTheme() {
+        document.body.classList.toggle('light');
+        const isLight = document.body.classList.contains('light');
+        document.getElementById('themeBtn').textContent = isLight ? '\u263E' : '\u2600';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    }
+    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light'); document.getElementById('themeBtn').textContent = '\u263E'; }
 
     // Pareto is now dynamic — loaded by loadPareto() from API/JSON
 
@@ -1728,6 +1749,15 @@
     }
 
     loadRootCauses();
+
+    // Load cycle count data from blob on startup
+    async function loadCycleCount() {
+        const data = await apiGet('cycle_count');
+        if (data && data.weeks && data.weeks.length) {
+            cycleCountWeeklyData = data;
+        }
+    }
+    loadCycleCount();
 
     // ===== MEETING MODE =====
     function getOwnerCard(id) {
