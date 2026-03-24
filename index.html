@@ -474,8 +474,8 @@
                             <th>Root Cause</th>
                             <th>Action</th>
                             <th>Status</th>
-                            <th>Monitoring</th>
-                            <th>Trend</th>
+                            <th>KPI</th>
+                            <th>Owner</th>
                         </tr>
                     </thead>
                     <tbody id="actionsBody"></tbody>
@@ -630,23 +630,25 @@
         <span><span style="display:inline-block;width:10px;height:10px;background:var(--green);border-radius:2px;margin-right:6px;vertical-align:middle;"></span>Actual > PS (unrecorded in system)</span>
     </div>`;
 
-    // All actions table
+    // All actions table — now dynamic from root_causes API
     function renderActions() {
+        if (!rootCausesData || !rootCausesData.length) return;
         const rows = [];
-        rootCauses.forEach(rc => {
+        const statusColors = { pending: 'status-pending', active: 'status-active', alert: 'status-alert', done: 'status-active' };
+        rootCausesData.forEach(rc => {
             rc.actions.forEach(a => {
+                const sc = statusColors[a.status] || 'status-pending';
                 rows.push(`<tr class="action-row" data-status="${a.status}">
-                    <td style="color: ${rc.color}; font-weight: 500;">${rc.name}</td>
-                    <td>${a.action}</td>
-                    <td><span class="status-badge status-${a.status}">${a.status === 'alert' ? 'ALERT' : a.status === 'active' ? 'ACTIVE' : 'PENDING'}</span></td>
-                    <td>${a.monitoring}</td>
-                    <td class="${a.trend.includes('↑') ? 'trend-up' : a.trend.includes('↓') ? 'trend-down' : 'trend-stable'}">${a.trend}</td>
+                    <td style="font-weight:500;">${rc.short_name}</td>
+                    <td>${a.title}</td>
+                    <td><span class="status-badge ${sc}">${a.status.toUpperCase()}</span></td>
+                    <td>${a.kpi || '—'}</td>
+                    <td>${a.owner}</td>
                 </tr>`);
             });
         });
         document.getElementById('actionsBody').innerHTML = rows.join('');
     }
-    renderActions();
 
     // ===== CHARTS =====
     Chart.defaults.font.family = "'Montserrat', sans-serif";
@@ -950,6 +952,7 @@
             }
             rootCausesData = data;
             renderOverview();
+            renderActions();
         } catch(e) {
             document.getElementById('rootCauseCards').innerHTML = '<div style="color:#EF5350;padding:20px;">Error loading: ' + e.message + '</div>';
         }
