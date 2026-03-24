@@ -567,21 +567,28 @@
     // ===== DATA =====
     // paretoItems removed — now loaded dynamically by loadPareto()
 
-    const trendWeeks = ["02.09", "02.16", "02.23", "03.02", "03.09", "03.16"];
-    const trendData = {
-        "Trufig":           [27, 28, 31, 33, 34, 47],
-        "WIP Error":        [15, 25, 37, 49, 30, 35],
-        "Count Requested":  [26,  1,  9,  3,  4,  4],
-        "Adj Requested":    [10, 20,  1,  1,  1,  1],
-        "PID Requested":    [13,  1,  3,  6,  1,  1],
-        "Transfer Needed":  [ 0,  1,  1,  2,  3,  6],
-        "Incorrect BOM":    [ 0,  3,  1,  3,  5,  1]
-    };
+    // Trend data now pulled from rootCausesData leading indicators
     const trendColors = {
-        "Trufig": "#EF5350", "WIP Error": "#00B2A9", "Count Requested": "#F9A825",
+        "Trufig Short PIDs": "#00A3E1", "WIP Error": "#00B2A9", "Count Requested": "#F9A825",
         "Adj Requested": "#FFA726", "PID Requested": "#7E57C2", "Transfer Needed": "#42A5F5",
         "Incorrect BOM": "#EC407A"
     };
+    function getTrendData() {
+        const indicators = {};
+        let weeks = [];
+        if (!rootCausesData) return { weeks, indicators };
+        rootCausesData.forEach(rc => {
+            (rc.sub_causes || []).forEach(sc => {
+                (sc.leading_indicators || []).forEach(li => {
+                    if (li.data && li.data.length > 0) {
+                        indicators[li.name] = li.data;
+                        if (li.weeks && li.weeks.length > weeks.length) weeks = li.weeks;
+                    }
+                });
+            });
+        });
+        return { weeks, indicators };
+    }
 
     const cycleCountData = [
         { cause: "Labeling & Nomenclature", count: 4, pct: 22.2 },
@@ -620,19 +627,23 @@
 
     // ===== CHARTS =====
     Chart.defaults.font.family = "'Montserrat', sans-serif";
+    let shortPidChart = null;
     function initCharts() {
-        if (window._chartsInit) return;
-        window._chartsInit = true;
+        const { weeks, indicators } = getTrendData();
+        if (!weeks.length) return;
 
-        new Chart(document.getElementById('shortPidChart'), {
+        // Destroy previous chart if exists (for re-render after upload)
+        if (shortPidChart) { shortPidChart.destroy(); shortPidChart = null; }
+
+        shortPidChart = new Chart(document.getElementById('shortPidChart'), {
             type: 'line',
             data: {
-                labels: trendWeeks,
-                datasets: Object.entries(trendData).map(([name, data]) => ({
+                labels: weeks,
+                datasets: Object.entries(indicators).map(([name, data]) => ({
                     label: name,
                     data: data,
-                    borderColor: trendColors[name],
-                    backgroundColor: trendColors[name] + '15',
+                    borderColor: trendColors[name] || 'var(--beam)',
+                    backgroundColor: (trendColors[name] || '#00A3E1') + '15',
                     borderWidth: 2,
                     tension: 0.3,
                     pointRadius: 3,
@@ -651,7 +662,8 @@
             }
         });
 
-        new Chart(document.getElementById('cycleCountChart'), {
+        if (window._ccChart) { window._ccChart.destroy(); }
+        window._ccChart = new Chart(document.getElementById('cycleCountChart'), {
             type: 'bar',
             data: {
                 labels: cycleCountData.map(d => d.cause),
@@ -969,9 +981,10 @@
             // Save to API
             if (!isLocal) await apiPut('root_causes', rootCausesData);
 
-            // Re-render
+            // Re-render everything
             renderOverview();
             renderActions();
+            initCharts(); // refresh trend chart with new data
 
             statusDiv.style.background = 'rgba(46,125,50,0.08)';
             statusDiv.style.border = '1px solid rgba(46,125,50,0.2)';
