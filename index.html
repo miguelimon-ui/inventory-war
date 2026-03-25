@@ -1843,6 +1843,7 @@
 
     // ===== 5 WHYS ROOT CAUSE ANALYSIS =====
     let fiveWhysData = { problem: '', whys: [] };
+    function closeFiveWhys() { document.getElementById('fiveWhysPanel').style.display = 'none'; }
 
     async function startFiveWhys() {
         const problem = document.getElementById('fiveWhysProblem').value.trim();
