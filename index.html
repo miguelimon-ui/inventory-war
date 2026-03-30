@@ -912,7 +912,10 @@
 
     // ===== TEAM (DYNAMIC) =====
     function renderTeamCard(owner, idx) {
-        const respHtml = owner.responsibilities.map(r => `<li>${r}</li>`).join('');
+        const respHtml = owner.responsibilities.map((r, ri) => `<li style="display:flex;align-items:center;gap:6px;">
+            <span style="flex:1;cursor:text;" onclick="event.stopPropagation();editResp(${idx},${ri})" title="Click to edit">${r}</span>
+            <span onclick="event.stopPropagation();removeResp(${idx},${ri})" style="color:var(--text-muted);cursor:pointer;font-size:14px;opacity:0;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0" title="Remove">×</span>
+        </li>`).join('') + `<li style="list-style:none;"><button onclick="addResp(${idx})" style="background:none;border:none;color:var(--beam);cursor:pointer;font-size:11px;font-family:inherit;padding:2px 0;">+ Add responsibility</button></li>`;
         const weeklyHtml = owner.weekly && owner.weekly.length > 0
             ? `<table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead><tbody>${
                 owner.weekly.map(w => `<tr><td>${w.metric}</td><td>${w.this_week || '—'}</td><td>${w.last_week || '—'}</td><td>${w.trend || '—'}</td></tr>`).join('')
@@ -920,11 +923,36 @@
         const statusInfo = { pending: { icon: '☐', badge: 'PENDING', cls: 'status-pending', liCls: '' }, active: { icon: '▶', badge: 'ACTIVE', cls: 'status-active', liCls: '' }, alert: { icon: '⚠', badge: 'ALERT', cls: 'status-alert', liCls: 'urgent' }, done: { icon: '✓', badge: 'DONE', cls: 'status-active', liCls: 'done' } };
         const renderActionLi = (a, ai) => {
             const si = statusInfo[a.status] || statusInfo.pending;
-            return `<li class="${si.liCls}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span class="status-badge ${si.cls} action-clickable" onclick="toggleAction(${idx},${ai})" title="Click to change status: pending → active → alert → done">${si.badge}</span>
-                <span style="flex:1;cursor:text;min-width:200px;" onclick="event.stopPropagation();editAction(${idx},${ai})" title="Click to edit">${a.title}${a.blocker ? ` <span style="font-size:10px;color:var(--text-muted);">[blocked: ${a.blocker}]</span>` : ''}${a.root_cause ? ` <span style="font-size:10px;color:var(--beam);">${a.root_cause}</span>` : ''}</span>
-                ${a.support ? '<span class="dep-tag">'+a.support+'</span>' : ''}${a.owner ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.owner+'</span>' : ''}
-                <span class="action-delete" onclick="deleteAction(${idx},${ai})">×</span>
+            // Find which root cause this action belongs to
+            let rcLabel = a.root_cause || '';
+            if (!rcLabel) {
+                rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+                    if (sc.actions.includes(a)) rcLabel = rc.name + ' → ' + sc.name;
+                }));
+            }
+            return `<li class="${si.liCls}" style="display:flex;flex-direction:column;gap:4px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span class="status-badge ${si.cls} action-clickable" onclick="toggleAction(${idx},${ai})" title="Click to change status">${si.badge}</span>
+                    <span style="flex:1;cursor:pointer;min-width:200px;" onclick="event.stopPropagation();toggleActionDetail('action-detail-${idx}-${ai}')" title="Click to see details">${a.title}</span>
+                    ${a.support ? '<span class="dep-tag">'+a.support+'</span>' : ''}${a.owner ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.owner+'</span>' : ''}
+                </div>
+                ${rcLabel ? '<div style="font-size:10px;color:var(--beam);margin-left:60px;">'+rcLabel+'</div>' : ''}
+                ${a.blocker ? '<div style="font-size:10px;color:#EF5350;margin-left:60px;">Roadblock: '+a.blocker+'</div>' : ''}
+                <div id="action-detail-${idx}-${ai}" class="collapsed" style="margin-left:60px;margin-top:4px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);">
+                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">${a.title}</div>
+                    ${rcLabel ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Root Cause:</span> <span style="color:var(--beam);">'+rcLabel+'</span></div>' : ''}
+                    ${a.kpi ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">KPI:</span> '+a.kpi+'</div>' : ''}
+                    ${a.baseline !== null ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Baseline:</span> '+a.baseline+' → <span style="color:var(--text-muted);">Current:</span> '+(a.current||'—')+' → <span style="color:var(--text-muted);">Target:</span> '+(a.target||'TBD')+'</div>' : ''}
+                    ${a.owner ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Owner:</span> '+a.owner+'</div>' : ''}
+                    ${a.support ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Support:</span> '+a.support+'</div>' : ''}
+                    ${a.blocker ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:#EF5350;">Roadblock:</span> '+a.blocker+'</div>' : ''}
+                    ${a.notes ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Notes:</span> '+a.notes+'</div>' : ''}
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button onclick="event.stopPropagation();editAction(${idx},${ai})" style="padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;font-size:10px;font-family:inherit;cursor:pointer;">Edit</button>
+                        <button onclick="event.stopPropagation();promptRoadblock(${idx},${ai})" style="padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;font-size:10px;font-family:inherit;cursor:pointer;">Add Roadblock</button>
+                        <button onclick="event.stopPropagation();deleteAction(${idx},${ai})" style="padding:4px 12px;background:none;border:1px solid #EF5350;color:#EF5350;border-radius:4px;font-size:10px;font-family:inherit;cursor:pointer;">Delete</button>
+                    </div>
+                </div>
             </li>`;
         };
         const activeActions = owner.actions.map((a, ai) => ({ a, ai })).filter(x => x.a.status !== 'done');
@@ -1301,14 +1329,32 @@
     function editAction(ownerIdx, actionIdx) {
         const a = ownersData[ownerIdx].actions[actionIdx];
         const form = document.getElementById(`form-${ownerIdx}`);
-        document.getElementById(`form-title-${ownerIdx}`).value = a.title;
-        document.getElementById(`form-status-${ownerIdx}`).value = a.status;
-        document.getElementById(`form-rc-${ownerIdx}`).value = a.root_cause || '';
-        if (document.getElementById(`form-support-${ownerIdx}`)) document.getElementById(`form-support-${ownerIdx}`).value = a.support || '';
+
+        // Find the root_cause sub_cause id for this action
+        let rcId = a.root_cause || '';
+        if (!rcId) {
+            rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+                if (sc.actions.includes(a)) rcId = sc.id;
+            }));
+        }
+
+        // Populate dropdown first, then set value
+        const rcSelect = document.getElementById(`form-rc-${ownerIdx}`);
+        populateRCDropdown(rcSelect);
+        rcSelect.value = rcId;
+
+        document.getElementById(`form-title-${ownerIdx}`).value = a.title || '';
+        document.getElementById(`form-status-${ownerIdx}`).value = a.status || 'pending';
+        if (document.getElementById(`form-kpi-${ownerIdx}`)) document.getElementById(`form-kpi-${ownerIdx}`).value = a.kpi || '';
+        if (document.getElementById(`form-baseline-${ownerIdx}`)) document.getElementById(`form-baseline-${ownerIdx}`).value = a.baseline !== null ? a.baseline : '';
+        if (document.getElementById(`form-target-${ownerIdx}`)) document.getElementById(`form-target-${ownerIdx}`).value = a.target !== null ? a.target : '';
+        if (document.getElementById(`form-support-${ownerIdx}`)) document.getElementById(`form-support-${ownerIdx}`).value = a.owner || a.support || '';
         document.getElementById(`form-blocker-${ownerIdx}`).value = a.blocker || '';
+
         form.classList.add('show');
         form.dataset.editIdx = actionIdx;
         document.getElementById(`form-title-${ownerIdx}`).focus();
+        setupAsanaToggle(ownerIdx);
     }
 
     async function saveAction(idx) {
@@ -1888,6 +1934,44 @@
         document.querySelector('#overview .kpi-row').style.display = '';
         document.querySelector('#overview .card').style.display = '';
         selectedRC = null;
+    }
+
+    // ===== RESPONSIBILITIES =====
+    async function removeResp(ownerIdx, respIdx) {
+        if (!confirm('Remove this responsibility?')) return;
+        ownersData[ownerIdx].responsibilities.splice(respIdx, 1);
+        renderTeamGrid();
+        if (!isLocal) await apiPut('owners', ownersData);
+    }
+    async function editResp(ownerIdx, respIdx) {
+        const current = ownersData[ownerIdx].responsibilities[respIdx];
+        const text = prompt('Edit responsibility:', current);
+        if (text === null || !text.trim()) return;
+        ownersData[ownerIdx].responsibilities[respIdx] = text.trim();
+        renderTeamGrid();
+        if (!isLocal) await apiPut('owners', ownersData);
+    }
+    async function addResp(ownerIdx) {
+        const text = prompt('New responsibility:');
+        if (!text || !text.trim()) return;
+        ownersData[ownerIdx].responsibilities.push(text.trim());
+        renderTeamGrid();
+        if (!isLocal) await apiPut('owners', ownersData);
+    }
+
+    // ===== ACTION DETAIL & ROADBLOCK =====
+    function toggleActionDetail(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('collapsed');
+    }
+
+    async function promptRoadblock(ownerIdx, actionIdx) {
+        const a = ownersData[ownerIdx].actions[actionIdx];
+        const roadblock = prompt('Describe the roadblock:', a.blocker || '');
+        if (roadblock === null) return; // cancelled
+        a.blocker = roadblock;
+        renderTeamGrid();
+        if (!isLocal) await apiPut('root_causes', rootCausesData);
     }
 
     // ===== ROOT CAUSE ACTION TOGGLE =====
