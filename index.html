@@ -986,13 +986,26 @@
 
     async function loadTeam() {
         document.getElementById('teamStatus').textContent = 'Loading...';
+        // Build owner cards from owners blob (for profile info) + root_causes (for actions)
         const data = await apiGet('owners');
         if (data) {
+            // Replace each owner's actions with those from root_causes filtered by owner/support name
+            data.forEach(owner => {
+                const allActions = [];
+                rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+                    sc.actions.forEach(a => {
+                        if (a.owner === owner.name || a.support === owner.name) {
+                            allActions.push(a);
+                        }
+                    });
+                }));
+                owner.actions = allActions;
+            });
             ownersData = data;
             renderTeamGrid();
-            document.getElementById('teamStatus').textContent = 'Live from API';
+            document.getElementById('teamStatus').textContent = 'Actions from root causes';
         } else {
-            document.getElementById('teamStatus').textContent = 'API unavailable — showing cached';
+            document.getElementById('teamStatus').textContent = 'API unavailable';
         }
     }
 
@@ -1002,7 +1015,8 @@
         const cur = statusCycle.indexOf(a.status);
         a.status = statusCycle[(cur + 1) % statusCycle.length];
         renderTeamGrid();
-        await apiPut('owners', ownersData);
+        // Save to root_causes since that's the source of truth
+        if (!isLocal) await apiPut('root_causes', rootCausesData);
     }
 
     async function deleteAction(ownerIdx, actionIdx) {
@@ -1311,13 +1325,25 @@
         const blocker = document.getElementById(`form-blocker-${idx}`).value.trim();
         const form = document.getElementById(`form-${idx}`);
         const editIdx = form.dataset.editIdx;
-        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, support: support || '', blocker: blocker || '' };
-        if (editIdx !== undefined && editIdx !== '') {
-            ownersData[idx].actions[parseInt(editIdx)] = actionData;
-            delete form.dataset.editIdx;
-        } else {
-            ownersData[idx].actions.push(actionData);
-        }
+        const ownerName = ownersData[idx]?.name || '';
+        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, owner: support || ownerName, support: ownerName, blocker: blocker || '' };
+
+        // Save to root_causes under the correct sub-cause
+        let saved = false;
+        rootCausesData.forEach(rcData => (rcData.sub_causes||[]).forEach(sc => {
+            if (sc.id === rc) {
+                if (editIdx !== undefined && editIdx !== '') {
+                    // Find the action in root_causes that matches
+                    const origAction = ownersData[idx].actions[parseInt(editIdx)];
+                    const rcAction = sc.actions.find(a => a.title === origAction.title);
+                    if (rcAction) Object.assign(rcAction, actionData);
+                } else {
+                    sc.actions.push(actionData);
+                }
+                saved = true;
+            }
+        }));
+        if (editIdx !== undefined && editIdx !== '') delete form.dataset.editIdx;
 
         // Create in Asana if toggled
         const asanaToggle = document.getElementById(`form-asana-toggle-${idx}`);
@@ -1333,12 +1359,15 @@
             } catch(e) { console.log('Asana create failed:', e); }
         }
 
-        renderTeamGrid();
-        await apiPut('owners', ownersData);
+        // Refresh team (re-filter from root_causes) and save
+        loadTeam();
+        renderOverview();
+        renderActions();
+        if (!isLocal) await apiPut('root_causes', rootCausesData);
     }
 
-    // Load team on page load
-    loadTeam();
+    // Load team AFTER root_causes are loaded
+    // (moved call to after loadRootCauses)
 
     // Also load Pareto from API and update chart
     let paretoData = [];
@@ -1480,6 +1509,7 @@
             rootCausesData = data;
             renderOverview();
             renderActions();
+            loadTeam(); // load team after root_causes so actions filter correctly
         } catch(e) {
             document.getElementById('rootCauseCards').innerHTML = '<div style="color:#EF5350;padding:20px;">Error loading: ' + e.message + '</div>';
         }
@@ -1591,7 +1621,7 @@
       }
     }
 
-    function renderActionCard(a, sc) {
+    function renderActionCard(a, sc, rcIdx, subIdx, actIdx) {
         const si = { pending: {badge:'PENDING',cls:'status-pending'}, active: {badge:'ACTIVE',cls:'status-active'}, alert: {badge:'ALERT',cls:'status-alert'}, done: {badge:'DONE',cls:'status-active'} };
         const s = si[a.status] || si.pending;
         const kpiMatch = (sc.leading_indicators||[]).find(li => li.name === a.kpi);
@@ -1604,8 +1634,9 @@
             const barColor = isRight ? '#4CAF50' : '#EF5350';
             progressHtml = `<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px;"><span>Baseline: ${a.baseline}</span><span>Current: <strong style="color:${barColor};">${a.current}</strong></span><span>Target: ${a.target}</span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${progress}%;background:${barColor};border-radius:3px;"></div></div></div>`;
         }
+        const clickable = rcIdx !== undefined ? ` action-clickable" onclick="toggleRCAction(${rcIdx},${subIdx},${actIdx})" title="Click to change status` : '"';
         return `<div style="padding:12px;background:var(--surface2);border-radius:6px;margin-bottom:8px;${a.status==='done'?'opacity:0.6;':''}">
-            <div style="display:flex;align-items:center;gap:8px;"><span class="status-badge ${s.cls}">${s.badge}</span><span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span><span class="dep-tag">${a.owner}</span>${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}</div>
+            <div style="display:flex;align-items:center;gap:8px;"><span class="status-badge ${s.cls}${clickable}">${s.badge}</span><span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span>${a.owner ? '<span class="dep-tag">'+a.owner+'</span>' : ''}${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}</div>
             ${a.kpi ? `<div style="margin-top:6px;font-size:11px;"><span style="color:var(--text-muted);">KPI:</span> <span style="color:${kpiColor};font-weight:500;">${a.kpi}</span></div>` : ''}
             ${progressHtml}
         </div>`;
@@ -1671,7 +1702,7 @@
                     </div>`;
                 }).join('');
 
-                const actionsHtml = sc.actions.map(a => renderActionCard(a, sc)).join('');
+                const actionsHtml = sc.actions.map((a,ai) => renderActionCard(a, sc, expandedMain, si, ai)).join('');
 
                 detailHtml = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
                     ${indicatorsHtml ? `<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;">Leading Indicators</div>${indicatorsHtml}` : ''}
@@ -1857,6 +1888,19 @@
         document.querySelector('#overview .kpi-row').style.display = '';
         document.querySelector('#overview .card').style.display = '';
         selectedRC = null;
+    }
+
+    // ===== ROOT CAUSE ACTION TOGGLE =====
+    const rcStatusCycle = ['pending', 'active', 'alert', 'done'];
+    async function toggleRCAction(rcIdx, subIdx, actIdx) {
+        const a = rootCausesData[rcIdx].sub_causes[subIdx].actions[actIdx];
+        const cur = rcStatusCycle.indexOf(a.status);
+        a.status = rcStatusCycle[(cur + 1) % rcStatusCycle.length];
+        if (!isLocal) await apiPut('root_causes', rootCausesData);
+        // Re-render the current view
+        if (expandedSub !== null) renderOverviewExpand();
+        renderOverview();
+        renderActions();
     }
 
     // ===== ASANA COMMENTS =====
