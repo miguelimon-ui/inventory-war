@@ -105,7 +105,12 @@
           { "title": "Capture deactivation in NPD process", "owner": "Alex", "status": "done", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": null },
           { "title": "Push for PPX cabinetry creation", "owner": "Rigo", "status": "pending", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": null },
           { "title": "Wedge cabinet BOM proposal", "owner": "Rigo", "status": "pending", "kpi": "BOMs Verified", "baseline": null, "current": null, "target": null },
-          { "title": "MISC.MAGNET.CUP — Compare physical consumption vs BOM in PeopleSoft, flag disconnections and correct BOM", "owner": "Juan Ruedas", "support": "Rigo Lopez", "status": "active", "kpi": "BOMs Verified", "baseline": null, "current": null, "target": null }
+          { "title": "MISC.MAGNET.CUP — Root caused: Magnet Cups obsoleted in PS 2023, consumption not tracking. Corrective action executed.", "owner": "Juan Ruedas", "support": "Rigo Lopez", "status": "done", "kpi": "BOMs Verified", "baseline": null, "current": null, "target": null },
+          { "title": "AT BOMs — BOM structure complete. Blocked: Engineering drawing updates → then PS subassembly BOM creation", "owner": "Engineering", "support": "Rigo", "status": "alert", "kpi": "BOMs Verified", "baseline": 0, "current": 0, "target": 1, "blocker": "Engineering drawings" },
+          { "title": "QX1010 & QX1020 Kits — BOM structure complete. Blocked: Engineering drawing updates → then PS subassembly BOM creation", "owner": "Engineering", "support": "Rigo", "status": "alert", "kpi": "BOMs Verified", "baseline": 0, "current": 0, "target": 1, "blocker": "Engineering drawings" },
+          { "title": "SA3 & SA4 Grills and Trims — BOM structure complete. Blocked: Engineering drawing updates → then PS subassembly BOM creation", "owner": "Engineering", "support": "Rigo", "status": "alert", "kpi": "BOMs Verified", "baseline": 0, "current": 0, "target": 1, "blocker": "Engineering drawings" },
+          { "title": "SPL3 Cabinet Subassemblies — BOM structure complete. Blocked: Engineering drawing updates → then PS subassembly BOM creation", "owner": "Engineering", "support": "Rigo", "status": "alert", "kpi": "BOMs Verified", "baseline": 0, "current": 0, "target": 1, "blocker": "Engineering drawings" },
+          { "title": "Wedge Cabinet Assemblies — BOM structure complete. Blocked: Engineering drawing updates → then PS subassembly BOM creation", "owner": "Engineering", "support": "Rigo", "status": "alert", "kpi": "BOMs Verified", "baseline": 0, "current": 0, "target": 1, "blocker": "Engineering drawings" }
         ]
       },
       {

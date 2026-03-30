@@ -29,3 +29,8 @@
   from = "/api/five-whys"
   to = "/.netlify/functions/five-whys"
   status = 200
+
+[[redirects]]
+  from = "/api/monday-gantt"
+  to = "/.netlify/functions/monday-gantt"
+  status = 200

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory War — Pareto Tracking</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -830,7 +831,15 @@
     // ===== PICKING GANTT (DYNAMIC) =====
 
     async function loadGantt() {
-        const data = await apiGet('gantt');
+        // Try live Monday data first, fallback to blob/JSON
+        let data = null;
+        if (!isLocal) {
+            try {
+                const r = await fetch('/api/monday-gantt');
+                if (r.ok) data = await r.json();
+            } catch(e) {}
+        }
+        if (!data) data = await apiGet('gantt');
         if (!data) return;
 
         const container = document.getElementById('pickingGantt');
@@ -887,8 +896,18 @@
             </div>`;
         });
 
+        // Add "today" marker line
+        const today = new Date();
+        if (today >= minDate && today <= maxDate) {
+            const todayPct = ((today - minDate) / (maxDate - minDate) * 100).toFixed(2);
+            html += `<div style="position:relative;height:0;">
+                <div style="position:absolute;left:calc(280px + (100% - 280px) * ${todayPct} / 100);top:-${validTasks.length * 46 + 80}px;width:2px;height:${validTasks.length * 46 + 80}px;background:#EF5350;z-index:10;opacity:0.7;"></div>
+                <div style="position:absolute;left:calc(280px + (100% - 280px) * ${todayPct} / 100 - 20px);top:-${validTasks.length * 46 + 95}px;font-size:9px;color:#EF5350;font-weight:600;z-index:11;white-space:nowrap;">TODAY</div>
+            </div>`;
+        }
+
         container.innerHTML = html;
-        document.getElementById('ganttSource').textContent = 'Source: Monday.com board — Picking App Implementation Gantt';
+        document.getElementById('ganttSource').textContent = 'Live from Monday.com board — synced on page load';
     }
     loadGantt();
 
