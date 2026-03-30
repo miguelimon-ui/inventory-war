@@ -994,7 +994,7 @@
                 const allActions = [];
                 rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
                     sc.actions.forEach(a => {
-                        if (a.owner === owner.name || a.support === owner.name) {
+                        if ((a.owner||'').includes(owner.name) || (a.support||'').includes(owner.name)) {
                             allActions.push(a);
                         }
                     });
