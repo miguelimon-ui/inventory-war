@@ -20,20 +20,26 @@ export default async (req) => {
     const bomSection = (sections.data || []).find(s => s.name.toLowerCase().includes('bom review'));
 
     let tasks = [];
-    if (bomSection) {
-      // Get tasks from BOM Reviews section
-      const tasksRes = await fetch(`${ASANA_BASE}/sections/${bomSection.gid}/tasks?opt_fields=name,completed,due_on,assignee.name,notes,permalink_url`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const tasksData = await tasksRes.json();
-      tasks = tasksData.data || [];
-    } else {
-      // Fallback: get all tasks from project
-      const tasksRes = await fetch(`${ASANA_BASE}/projects/${PROJECT_GID}/tasks?opt_fields=name,completed,due_on,assignee.name,notes,permalink_url`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const tasksData = await tasksRes.json();
-      tasks = tasksData.data || [];
+    const sectionGid = bomSection ? bomSection.gid : null;
+    const tasksUrl = sectionGid
+      ? `${ASANA_BASE}/sections/${sectionGid}/tasks?opt_fields=name,completed,due_on,assignee.name,notes,permalink_url,num_subtasks`
+      : `${ASANA_BASE}/projects/${PROJECT_GID}/tasks?opt_fields=name,completed,due_on,assignee.name,notes,permalink_url,num_subtasks`;
+
+    const tasksRes = await fetch(tasksUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+    const tasksData = await tasksRes.json();
+    tasks = tasksData.data || [];
+
+    // Fetch stories (comments) for each task
+    for (const task of tasks) {
+      try {
+        const storiesRes = await fetch(`${ASANA_BASE}/tasks/${task.gid}/stories?opt_fields=text,created_by.name,created_at,type`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const storiesData = await storiesRes.json();
+        task.comments = (storiesData.data || [])
+          .filter(s => s.type === 'comment')
+          .map(s => ({ text: s.text, author: s.created_by?.name || 'Unknown', date: s.created_at }));
+      } catch(e) { task.comments = []; }
     }
 
     return new Response(JSON.stringify({ tasks, section: bomSection ? bomSection.name : 'All Tasks' }), { headers });

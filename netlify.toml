@@ -34,3 +34,8 @@
   from = "/api/monday-gantt"
   to = "/.netlify/functions/monday-gantt"
   status = 200
+
+[[redirects]]
+  from = "/api/asana-comment"
+  to = "/.netlify/functions/asana-comment"
+  status = 200

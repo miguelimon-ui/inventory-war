@@ -1860,6 +1860,24 @@
         selectedRC = null;
     }
 
+    // ===== ASANA COMMENTS =====
+    async function postAsanaComment(taskGid) {
+        const author = document.getElementById('comment-author-' + taskGid).value;
+        const text = document.getElementById('comment-text-' + taskGid).value.trim();
+        if (!text) return;
+        document.getElementById('comment-text-' + taskGid).value = 'Posting...';
+        document.getElementById('comment-text-' + taskGid).disabled = true;
+        try {
+            await fetch('/api/asana-comment', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ task_gid: taskGid, text, author_name: author })
+            });
+            loadBOMReviews(); // refresh to show new comment
+        } catch(e) {
+            document.getElementById('comment-text-' + taskGid).value = 'Error posting';
+        }
+    }
+
     // ===== 5 WHYS ROOT CAUSE ANALYSIS =====
     let fiveWhysData = { problem: '', whys: [] };
     function closeFiveWhys() { document.getElementById('fiveWhysPanel').style.display = 'none'; }
@@ -1982,14 +2000,36 @@
                 const isDone = t.completed;
                 const statusCls = isDone ? 'status-active' : (t.due_on && new Date(t.due_on) < new Date() ? 'status-alert' : 'status-pending');
                 const statusLabel = isDone ? 'DONE' : (t.due_on && new Date(t.due_on) < new Date() ? 'OVERDUE' : 'OPEN');
-                return `<div class="card" style="margin-bottom:8px;${isDone ? 'opacity:0.6;' : ''}border-left:3px solid ${isDone ? '#4CAF50' : '#7E57C2'};">
+                const commentsHtml = (t.comments || []).length ? t.comments.map(c => {
+                    const d = new Date(c.date);
+                    const dateStr = d.toLocaleDateString('en-US', {month:'short',day:'numeric'});
+                    return `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
+                        <span style="font-weight:600;color:var(--beam);">${c.author}</span>
+                        <span style="color:var(--text-muted);margin-left:6px;">${dateStr}</span>
+                        <div style="color:var(--text-secondary);margin-top:2px;">${c.text}</div>
+                    </div>`;
+                }).join('') : '<div style="font-size:11px;color:var(--text-muted);padding:4px 0;">No comments yet</div>';
+
+                return `<div class="card" style="margin-bottom:12px;${isDone ? 'opacity:0.6;' : ''}border-left:3px solid ${isDone ? '#4CAF50' : '#7E57C2'};">
                     <div style="display:flex;align-items:center;gap:8px;">
                         <span class="status-badge ${statusCls}">${statusLabel}</span>
                         <span style="flex:1;font-size:13px;${isDone ? 'text-decoration:line-through;' : ''}">${t.name}</span>
                         ${t.assignee ? '<span class="dep-tag">' + t.assignee.name + '</span>' : ''}
                         ${t.due_on ? '<span style="font-size:11px;color:var(--text-muted);">Due: ' + t.due_on + '</span>' : ''}
+                        ${t.permalink_url ? '<a href="' + t.permalink_url + '" target="_blank" style="font-size:10px;color:var(--beam);text-decoration:none;font-weight:600;">Open in Asana ↗</a>' : ''}
                     </div>
-                    ${t.notes ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);">' + t.notes.substring(0,150) + (t.notes.length > 150 ? '...' : '') + '</div>' : ''}
+                    ${t.notes ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);">' + t.notes.substring(0,200) + (t.notes.length > 200 ? '...' : '') + '</div>' : ''}
+                    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
+                        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px;">Comments (${(t.comments||[]).length})</div>
+                        ${commentsHtml}
+                        <div style="display:flex;gap:6px;margin-top:8px;">
+                            <select id="comment-author-${t.gid}" style="padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;font-family:inherit;">
+                                <option>Miguel</option><option>Rigo</option><option>Stephanie</option><option>Alex</option><option>Carlos</option><option>Lidia</option><option>Alberto</option><option>Jimmy</option>
+                            </select>
+                            <input type="text" id="comment-text-${t.gid}" placeholder="Add comment..." style="flex:1;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;" onkeydown="if(event.key==='Enter')postAsanaComment('${t.gid}')">
+                            <button onclick="postAsanaComment('${t.gid}')" style="padding:6px 12px;background:var(--beam);border:none;color:white;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;">Post</button>
+                        </div>
+                    </div>
                 </div>`;
             }).join('');
         } catch(e) {
