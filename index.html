@@ -1057,9 +1057,24 @@
 
     async function deleteAction(ownerIdx, actionIdx) {
         if (!confirm('Delete this action?')) return;
-        ownersData[ownerIdx].actions.splice(actionIdx, 1);
+        const action = ownersData[ownerIdx].actions[actionIdx];
+        // Remove from rootCausesData (single source of truth)
+        let removed = false;
+        rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+            const idx = sc.actions.indexOf(action);
+            if (idx !== -1) { sc.actions.splice(idx, 1); removed = true; }
+        }));
+        // Rebuild owner's derived actions
+        const owner = ownersData[ownerIdx];
+        const allActions = [];
+        rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+            sc.actions.forEach(a => {
+                if ((a.owner||'').includes(owner.name) || (a.support||'').includes(owner.name)) allActions.push(a);
+            });
+        }));
+        owner.actions = allActions;
         renderTeamGrid();
-        await apiPut('owners', ownersData);
+        await apiPut('root_causes', rootCausesData);
     }
 
     // ===== FILE UPLOAD — Short PID Review =====
