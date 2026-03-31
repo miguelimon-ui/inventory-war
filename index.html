@@ -532,7 +532,8 @@
                             <th>Status</th>
                             <th>KPI</th>
                             <th>Owner</th>
-                            <th>Support</th>
+                            <th>Start</th>
+                            <th>Due</th>
                         </tr>
                     </thead>
                     <tbody id="actionsBody"></tbody>
@@ -689,8 +690,9 @@
                         <td>${a.title}</td>
                         <td><span class="status-badge ${sc}">${a.status.toUpperCase()}</span></td>
                         <td>${a.kpi || '—'}</td>
-                        <td>${a.owner}</td>
-                        <td>${a.support || '—'}</td>
+                        <td>${a.owner || '—'}</td>
+                        <td>${a.start_date || '—'}</td>
+                        <td style="${a.due_date && new Date(a.due_date)<new Date() && a.status!=='done' ? 'color:#EF5350;font-weight:600;' : ''}">${a.due_date || '—'}${a.due_date && new Date(a.due_date)<new Date() && a.status!=='done' ? ' ⚠' : ''}</td>
                     </tr>`);
                 });
             });
@@ -937,12 +939,14 @@
                     ${a.support ? '<span class="dep-tag">'+a.support+'</span>' : ''}${a.owner ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.owner+'</span>' : ''}
                 </div>
                 ${rcLabel ? '<div style="font-size:10px;color:var(--beam);margin-left:60px;">'+rcLabel+'</div>' : ''}
+                ${a.due_date ? '<div style="font-size:10px;color:var(--text-muted);margin-left:60px;">'+(a.start_date?a.start_date+' → ':'')+a.due_date+(new Date(a.due_date)<new Date()&&a.status!=='done'?' <span style="color:#EF5350;">OVERDUE</span>':'')+'</div>' : ''}
                 ${a.blocker ? '<div style="font-size:10px;color:#EF5350;margin-left:60px;">Roadblock: '+a.blocker+'</div>' : ''}
                 <div id="action-detail-${idx}-${ai}" class="collapsed" style="margin-left:60px;margin-top:4px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);">
                     <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">${a.title}</div>
                     ${rcLabel ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Root Cause:</span> <span style="color:var(--beam);">'+rcLabel+'</span></div>' : ''}
                     ${a.kpi ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">KPI:</span> '+a.kpi+'</div>' : ''}
                     ${a.baseline !== null ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Baseline:</span> '+a.baseline+' → <span style="color:var(--text-muted);">Current:</span> '+(a.current||'—')+' → <span style="color:var(--text-muted);">Target:</span> '+(a.target||'TBD')+'</div>' : ''}
+                    ${a.start_date || a.due_date ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Dates:</span> '+(a.start_date||'—')+' → '+(a.due_date||'—')+(a.due_date && new Date(a.due_date)<new Date() && a.status!=='done'?' <span style="color:#EF5350;font-weight:600;">OVERDUE</span>':'')+'</div>' : ''}
                     ${a.owner ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Owner:</span> '+a.owner+'</div>' : ''}
                     ${a.support ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Support:</span> '+a.support+'</div>' : ''}
                     ${a.blocker ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:#EF5350;">Roadblock:</span> '+a.blocker+'</div>' : ''}
@@ -979,6 +983,10 @@
                     <select id="form-status-${idx}"><option value="pending">Pending</option><option value="active">Active</option><option value="alert">Alert</option></select>
                     <input type="text" id="form-baseline-${idx}" placeholder="Baseline" style="width:80px;">
                     <input type="text" id="form-target-${idx}" placeholder="Target" style="width:80px;">
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <div style="flex:1;"><label style="font-size:10px;color:var(--text-muted);">Start Date</label><input type="date" id="form-start-${idx}" style="width:100%;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;"></div>
+                    <div style="flex:1;"><label style="font-size:10px;color:var(--text-muted);">Due Date</label><input type="date" id="form-due-${idx}" style="width:100%;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;"></div>
                 </div>
                 <input type="text" id="form-support-${idx}" placeholder="Owner (who in production is responsible?)">
                 <input type="text" id="form-blocker-${idx}" placeholder="Blocker (optional)">
@@ -1348,6 +1356,8 @@
         if (document.getElementById(`form-kpi-${ownerIdx}`)) document.getElementById(`form-kpi-${ownerIdx}`).value = a.kpi || '';
         if (document.getElementById(`form-baseline-${ownerIdx}`)) document.getElementById(`form-baseline-${ownerIdx}`).value = a.baseline !== null ? a.baseline : '';
         if (document.getElementById(`form-target-${ownerIdx}`)) document.getElementById(`form-target-${ownerIdx}`).value = a.target !== null ? a.target : '';
+        if (document.getElementById(`form-start-${ownerIdx}`)) document.getElementById(`form-start-${ownerIdx}`).value = a.start_date || '';
+        if (document.getElementById(`form-due-${ownerIdx}`)) document.getElementById(`form-due-${ownerIdx}`).value = a.due_date || '';
         if (document.getElementById(`form-support-${ownerIdx}`)) document.getElementById(`form-support-${ownerIdx}`).value = a.owner || a.support || '';
         document.getElementById(`form-blocker-${ownerIdx}`).value = a.blocker || '';
 
@@ -1371,8 +1381,10 @@
         const blocker = document.getElementById(`form-blocker-${idx}`).value.trim();
         const form = document.getElementById(`form-${idx}`);
         const editIdx = form.dataset.editIdx;
+        const startDate = document.getElementById(`form-start-${idx}`)?.value || '';
+        const dueDate = document.getElementById(`form-due-${idx}`)?.value || '';
         const ownerName = ownersData[idx]?.name || '';
-        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, owner: support || ownerName, support: ownerName, blocker: blocker || '' };
+        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, owner: support || ownerName, support: ownerName, blocker: blocker || '', start_date: startDate || null, due_date: dueDate || null };
 
         // Save to root_causes under the correct sub-cause
         let saved = false;
