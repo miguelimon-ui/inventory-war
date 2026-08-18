@@ -367,7 +367,6 @@
 
     <div class="nav">
         <button class="nav-btn active" onclick="showSection('overview')">Executive Summary</button>
-        <button class="nav-btn" onclick="showSection('pareto')">Pareto Detail</button>
         <button class="nav-btn" onclick="showSection('trends')">Weekly Trends</button>
         <button class="nav-btn" onclick="showSection('picking')">Picking</button>
         <button class="nav-btn" onclick="showSection('actions')">All Actions</button>
@@ -447,6 +446,23 @@
                 <div class="card-title">Cycle Count — Root Cause Pareto</div>
                 <div class="chart-container">
                     <canvas id="cycleCountChart"></canvas>
+                </div>
+            </div>
+            <div class="card" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div class="card-title" style="margin-bottom:4px;">Scrap Tracking — 2185 Production Floor</div>
+                    <p style="color:var(--text-muted);font-size:12px;margin:0;">Upload "2185 Scrap Review.xlsx" to auto-update forms submitted + weekly $.</p>
+                </div>
+                <label style="padding:8px 16px;border:1px solid var(--beam);background:transparent;color:var(--beam);cursor:pointer;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;text-transform:uppercase;letter-spacing:0.05em;">
+                    Upload Scrap
+                    <input type="file" accept=".xlsx,.xls" onchange="handleScrapUpload(this)" style="display:none;">
+                </label>
+            </div>
+            <div id="scrapUploadStatus" style="display:none;padding:12px;margin-bottom:12px;border-radius:6px;font-size:13px;"></div>
+            <div class="card" style="margin-top:12px;">
+                <div class="card-title">Scrap — Forms Submitted vs Weekly $ Value</div>
+                <div class="chart-container">
+                    <canvas id="scrapChart"></canvas>
                 </div>
             </div>
         </div>
@@ -782,6 +798,9 @@
                 }
             }
         });
+
+        // Scrap chart (uses seeded scrapWeeklyData from root_causes or upload)
+        renderScrapChart();
     }
 
     // ===== NAVIGATION =====
@@ -1040,7 +1059,7 @@
                 weekCols.push({ col: c, label: weekLabel });
             }
 
-            // Extract data rows
+            // Extract data rows — preserve empties as null so we can strip trailing missing weeks per indicator
             const reasons = {};
             for (let i = headerIdx + 1; i < rows.length; i++) {
                 const r = rows[i];
@@ -1049,29 +1068,40 @@
                 if (reason === 'Resolved' || reason === 'Total' || !reason) continue;
                 reasons[reason] = weekCols.map(wc => {
                     const v = r[wc.col];
-                    return (v === '—' || v === undefined || v === null) ? 0 : Number(v) || 0;
+                    if (v === '—' || v === undefined || v === null || v === '') return null;
+                    if (typeof v === 'string' && v.trim().toLowerCase() === 'new') return null;
+                    const n = Number(v);
+                    return Number.isFinite(n) ? n : null;
                 });
             }
 
-            const weeks = weekCols.map(wc => wc.label);
-            const latestWeek = weeks[weeks.length - 1];
+            const allWeeks = weekCols.map(wc => wc.label);
 
-            // Map reasons to leading indicators in root_causes
+            // Map reasons to leading indicators in root_causes (case-insensitive lookup)
             const indicatorMap = {
-                'Trufig': { rc: 'process', sub: 'pid_flow', indicator: 'Trufig Short PIDs' },
-                'PID Requested': { rc: 'process', sub: 'pid_flow', indicator: 'PID Requested' },
-                'WIP Error': { rc: 'process', sub: 'pid_flow', indicator: 'WIP Error' },
-                'Adj Requested': { rc: 'transactions', sub: 'adjustments', indicator: 'Adj Requested' },
-                'Count Requested': { rc: 'data', sub: 'sku_selection', indicator: 'Count Requested' },
-                'Incorrect BOM': { rc: 'process', sub: 'known_issues', indicator: 'Incorrect BOM' },
-                'Transfer Needed': { rc: 'execution', sub: 'pallet_labeling', indicator: 'Transfer Needed' },
+                'trufig': { rc: 'process', sub: 'pid_flow', indicator: 'Trufig Short PIDs' },
+                'pid requested': { rc: 'process', sub: 'pid_flow', indicator: 'PID Requested' },
+                'wip error': { rc: 'process', sub: 'pid_flow', indicator: 'WIP Error' },
+                'adj requested': { rc: 'transactions', sub: 'adjustments', indicator: 'Adj Requested' },
+                'count requested': { rc: 'data', sub: 'sku_selection', indicator: 'Count Requested' },
+                'incorrect bom': { rc: 'process', sub: 'known_issues', indicator: 'Incorrect BOM' },
+                'transfer needed': { rc: 'execution', sub: 'pallet_labeling', indicator: 'Transfer Needed' },
+                'issue kit error': { rc: 'process', sub: 'pid_flow', indicator: 'Issue Kit Error' },
+                'teardown pid': { rc: 'process', sub: 'pid_flow', indicator: 'Teardown PID' },
+                'sonance': { rc: 'process', sub: 'pid_flow', indicator: 'Sonance PIDs' },
+                'pending completion': { rc: 'process', sub: 'pid_flow', indicator: 'Pending Completion' },
             };
 
             // Update root_causes data
             let updated = 0;
-            for (const [reason, values] of Object.entries(reasons)) {
-                const mapping = indicatorMap[reason];
+            for (const [reason, rawValues] of Object.entries(reasons)) {
+                const mapping = indicatorMap[reason.toLowerCase()];
                 if (!mapping) continue;
+                // Strip trailing null/empty weeks for this indicator so missing-data weeks don't render as 0
+                let endIdx = rawValues.length;
+                while (endIdx > 0 && (rawValues[endIdx-1] === null)) endIdx--;
+                const values = rawValues.slice(0, endIdx).map(v => v === null ? 0 : v);
+                const weeks = allWeeks.slice(0, endIdx);
                 const rc = rootCausesData.find(r => r.id === mapping.rc);
                 if (!rc) continue;
                 const sub = (rc.sub_causes || []).find(s => s.id === mapping.sub);
@@ -1105,8 +1135,12 @@
             statusDiv.style.background = 'rgba(46,125,50,0.08)';
             statusDiv.style.border = '1px solid rgba(46,125,50,0.2)';
             statusDiv.style.color = '#4CAF50';
-            const summary = Object.entries(reasons).map(([r, vals]) => r + ': ' + vals[vals.length-1]).join(', ');
-            statusDiv.textContent = `Updated ${updated} indicators from ${Object.keys(reasons).length} reasons (${weeks.length} weeks). Latest: ${latestWeek}. ${summary}`;
+            const summary = Object.entries(reasons).map(([r, vals]) => {
+                const lastReal = [...vals].reverse().find(v => v !== null);
+                return r + ': ' + (lastReal !== undefined ? lastReal : '—');
+            }).join(', ');
+            const latestWeek = allWeeks[allWeeks.length - 1] || '';
+            statusDiv.textContent = `Updated ${updated} indicators from ${Object.keys(reasons).length} reasons (${allWeeks.length} weeks). Latest: ${latestWeek}. ${summary}`;
 
         } catch(e) {
             showUploadError('Error parsing Excel: ' + e.message);
@@ -1125,6 +1159,130 @@
 
     // ===== FILE UPLOAD — Cycle Count =====
     let cycleCountWeeklyData = { weeks: [], accuracy: [], adjustments: [], pareto: [] };
+    let scrapWeeklyData = { weeks: [], forms: [], values: [] };
+
+    // ===== FILE UPLOAD — 2185 Scrap Review =====
+    async function handleScrapUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const statusDiv = document.getElementById('scrapUploadStatus');
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = 'rgba(0,163,225,0.08)';
+        statusDiv.style.border = '1px solid rgba(0,163,225,0.2)';
+        statusDiv.style.color = 'var(--beam)';
+        statusDiv.textContent = 'Reading Excel...';
+
+        try {
+            const data = await file.arrayBuffer();
+            const wb = XLSX.read(data);
+            const datePat = /^(\d{2})\.(\d{2})\.\d{2}$/;
+            const weekly = [];
+
+            for (const sheetName of wb.SheetNames) {
+                const m = sheetName.trim().match(datePat);
+                if (!m) continue;
+                const weekLabel = `${m[1]}.${m[2]}`;
+                const ws = wb.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
+
+                // Find header row containing "total scrap"
+                let headerIdx = -1;
+                let totalCol = -1;
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i] || [];
+                    for (let c = 0; c < r.length; c++) {
+                        if (String(r[c] || '').toLowerCase().trim() === 'total scrap') {
+                            headerIdx = i; totalCol = c; break;
+                        }
+                    }
+                    if (headerIdx >= 0) break;
+                }
+
+                if (headerIdx < 0) { weekly.push({ week: weekLabel, forms: 0, value: 0 }); continue; }
+
+                let forms = 0;
+                let total = 0;
+                for (let i = headerIdx + 1; i < rows.length; i++) {
+                    const r = rows[i] || [];
+                    const v = r[totalCol];
+                    if (v === null || v === undefined || v === '') continue;
+                    const n = Number(v);
+                    if (!Number.isFinite(n) || n <= 0) continue;
+                    // Must be a real data row — has scrap date or entered-by or item info in earlier columns
+                    const hasContext = r.slice(0, totalCol).some(c => c !== null && c !== undefined && String(c).trim() !== '');
+                    if (!hasContext) continue;
+                    forms++;
+                    total += n;
+                }
+
+                weekly.push({ week: weekLabel, forms, value: Math.round(total) });
+            }
+
+            if (!weekly.length) { showScrapError('No weekly sheets found (expected MM.DD.YY tabs).'); return; }
+
+            weekly.sort((a, b) => a.week.localeCompare(b.week));
+            const weeks = weekly.map(w => w.week);
+            const forms = weekly.map(w => w.forms);
+            const values = weekly.map(w => w.value);
+            scrapWeeklyData = { weeks, forms, values };
+
+            // Update root_causes scrap indicators
+            const proc = (rootCausesData || []).find(r => r.id === 'process');
+            const scrap = proc && (proc.sub_causes || []).find(s => s.id === 'scrap_process');
+            if (scrap) {
+                const formsLI = (scrap.leading_indicators || []).find(l => l.name === 'Scrap Forms Submitted');
+                const valueLI = (scrap.leading_indicators || []).find(l => l.name === 'Weekly Scrap Value ($)');
+                if (formsLI) { formsLI.weeks = weeks; formsLI.data = forms; formsLI.status = 'controlled'; }
+                if (valueLI) { valueLI.weeks = weeks; valueLI.data = values; valueLI.status = 'monitored'; }
+                if (!isLocal) await apiPut('root_causes', rootCausesData);
+            }
+
+            renderScrapChart();
+            renderOverview && renderOverview();
+
+            statusDiv.style.background = 'rgba(46,125,50,0.08)';
+            statusDiv.style.border = '1px solid rgba(46,125,50,0.2)';
+            statusDiv.style.color = '#4CAF50';
+            const latest = weekly[weekly.length - 1];
+            statusDiv.textContent = `Loaded ${weeks.length} weeks. Latest ${latest.week}: ${latest.forms} forms, $${latest.value}. Total $${values.reduce((s,v)=>s+v,0)} across all weeks.`;
+        } catch(e) {
+            showScrapError('Error parsing Excel: ' + e.message);
+        }
+        input.value = '';
+    }
+
+    function showScrapError(msg) {
+        const statusDiv = document.getElementById('scrapUploadStatus');
+        statusDiv.style.background = 'rgba(198,40,40,0.08)';
+        statusDiv.style.border = '1px solid rgba(198,40,40,0.2)';
+        statusDiv.style.color = '#EF5350';
+        statusDiv.textContent = msg;
+    }
+
+    function renderScrapChart() {
+        const el = document.getElementById('scrapChart');
+        if (!el || !scrapWeeklyData.weeks.length) return;
+        if (window._scrapChart) window._scrapChart.destroy();
+        window._scrapChart = new Chart(el, {
+            type: 'bar',
+            data: {
+                labels: scrapWeeklyData.weeks,
+                datasets: [
+                    { type: 'bar', label: 'Forms Submitted', data: scrapWeeklyData.forms, backgroundColor: '#00A3E180', borderColor: '#00A3E1', borderWidth: 1, yAxisID: 'y', order: 2 },
+                    { type: 'line', label: 'Weekly Value ($)', data: scrapWeeklyData.values, borderColor: '#EF5350', backgroundColor: '#EF535015', borderWidth: 2, tension: 0.3, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: '#6b7780', usePointStyle: true, padding: 16, font: { size: 11, weight: 500 } } } },
+                scales: {
+                    x: { grid: { color: '#3a444c' }, ticks: { color: '#6b7780', font: { size: 10 } } },
+                    y: { position: 'left', grid: { color: '#3a444c' }, ticks: { color: '#00A3E1', stepSize: 1, font: { size: 11 } }, beginAtZero: true, title: { display: true, text: 'Forms', color: '#00A3E1', font: { size: 10 } } },
+                    y1: { position: 'right', grid: { display: false }, ticks: { color: '#EF5350', font: { size: 11 }, callback: v => '$' + v }, beginAtZero: true, title: { display: true, text: '$ Value', color: '#EF5350', font: { size: 10 } } }
+                }
+            }
+        });
+    }
 
     async function handleCycleUpload(input) {
         const file = input.files[0];
@@ -1429,12 +1587,56 @@
                 </div>`;
             }).join('');
 
+            // Match Pareto sub-group to root_causes sub-cause via pareto_codes
+            let matchedSC = null;
+            for (const rc of (rootCausesData || [])) {
+                for (const sc of (rc.sub_causes || [])) {
+                    if ((sc.pareto_codes || []).includes(subName)) {
+                        matchedSC = sc;
+                        break;
+                    }
+                }
+                if (matchedSC) break;
+            }
+
+            let actionsHtml = '';
+            if (matchedSC) {
+                const allLI = matchedSC.leading_indicators || [];
+                const mergedActions = getMergedActions(matchedSC);
+                const doneAct = mergedActions.filter(a => a.status === 'done').length;
+                const totalAct = mergedActions.length;
+                const indicatorsHtml = allLI.map(li => {
+                    const liColor = getStatusColor(li.status);
+                    const current = li.data && li.data.length ? li.data[li.data.length-1] : '—';
+                    const baseline = li.data && li.data.length ? li.data[0] : '—';
+                    return `<div style="padding:10px 12px;background:var(--bg);border-radius:6px;border-left:3px solid ${liColor};margin-bottom:6px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div><span style="font-size:12px;font-weight:600;">${li.name}</span> <span style="font-size:10px;color:${liColor};font-weight:600;margin-left:8px;">${getStatusLabel(li.status)}</span></div>
+                            <div style="font-size:10px;color:var(--text-muted);">${baseline} → <strong style="color:${liColor};">${current}</strong>${li.goal !== null && li.goal !== undefined ? ' → ' + li.goal : ''}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+                const actionCards = mergedActions.map(a => renderActionCard(a, matchedSC)).join('');
+                const scLink = matchedSC.link ? `<a href="${matchedSC.link}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--beam);color:#fff;border-radius:4px;text-decoration:none;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-left:12px;">↗ ${matchedSC.link_label || 'Open Link'}</a>` : '';
+
+                actionsHtml = `<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">What we're doing about it — ${doneAct}/${totalAct} actions done${scLink}</div>
+                    </div>
+                    ${indicatorsHtml ? `<div style="margin-bottom:12px;">${indicatorsHtml}</div>` : ''}
+                    ${actionCards}
+                </div>`;
+            } else {
+                actionsHtml = `<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);">No linked actions for this sub-group yet.</div>`;
+            }
+
             detailHtml = `<div class="card" style="margin-top:16px;border-left:4px solid ${color};">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                     <div style="font-size:15px;font-weight:600;">${subName}</div>
                     <div style="font-size:16px;font-weight:600;color:${color};">$${(sg.total/1000).toFixed(0)}K</div>
                 </div>
                 ${itemsHtml}
+                ${actionsHtml}
             </div>`;
         }
 
@@ -1460,6 +1662,20 @@
                 return;
             }
             rootCausesData = data;
+            // Seed scrapWeeklyData from existing indicators so chart renders without upload
+            const proc = data.find(r => r.id === 'process');
+            const scrap = proc && (proc.sub_causes || []).find(s => s.id === 'scrap_process');
+            if (scrap) {
+                const formsLI = (scrap.leading_indicators || []).find(l => l.name === 'Scrap Forms Submitted');
+                const valueLI = (scrap.leading_indicators || []).find(l => l.name === 'Weekly Scrap Value ($)');
+                if (formsLI && formsLI.data && formsLI.data.length) {
+                    scrapWeeklyData = {
+                        weeks: formsLI.weeks || [],
+                        forms: formsLI.data || [],
+                        values: (valueLI && valueLI.data) || []
+                    };
+                }
+            }
             renderOverview();
             renderActions();
         } catch(e) {
@@ -1513,6 +1729,59 @@
 
     // Helper: get all sub_causes across all main codes
     function allSubCauses() { return rootCausesData.flatMap(rc => rc.sub_causes || []); }
+
+    // Helper: merge ownersData (Team tab edits) with root_causes actions for a sub-cause
+    // Team tab is the source of truth for status; root_causes provides the canonical action set + KPI links
+    function getMergedActions(sc) {
+        if (!sc) return [];
+        const ownerByTitle = new Map();
+        const ownerByRC = [];
+        for (const o of (ownersData || [])) {
+            for (const oa of (o.actions || [])) {
+                const title = ((oa.title || oa.action || '') + '').trim().toLowerCase();
+                if (title) ownerByTitle.set(title, Object.assign({}, oa, { _owner: o.name }));
+                if (oa.root_cause && oa.root_cause === sc.id) {
+                    ownerByRC.push(Object.assign({}, oa, { _owner: o.name }));
+                }
+            }
+        }
+
+        const merged = [];
+        const usedTitles = new Set();
+        for (const a of (sc.actions || [])) {
+            const tKey = ((a.title || '') + '').trim().toLowerCase();
+            const oa = ownerByTitle.get(tKey);
+            if (oa) {
+                usedTitles.add(tKey);
+                merged.push(Object.assign({}, a, {
+                    status: oa.status || a.status,
+                    support: oa.support || a.support,
+                    owner: oa._owner || a.owner,
+                    blocker: oa.blocker || a.blocker,
+                    kpi: oa.kpi || a.kpi
+                }));
+            } else {
+                merged.push(a);
+            }
+        }
+        for (const oa of ownerByRC) {
+            const tKey = ((oa.title || oa.action || '') + '').trim().toLowerCase();
+            if (!usedTitles.has(tKey) && !merged.some(m => ((m.title||'')+'').trim().toLowerCase() === tKey)) {
+                merged.push({
+                    title: oa.title || oa.action,
+                    owner: oa._owner,
+                    support: oa.support,
+                    status: oa.status || 'pending',
+                    kpi: oa.kpi,
+                    baseline: oa.baseline,
+                    current: oa.current,
+                    target: oa.target,
+                    blocker: oa.blocker
+                });
+            }
+        }
+        return merged;
+    }
 
     function renderOverview() {
       try {
@@ -1586,10 +1855,12 @@
             const barColor = isRight ? '#4CAF50' : '#EF5350';
             progressHtml = `<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px;"><span>Baseline: ${a.baseline}</span><span>Current: <strong style="color:${barColor};">${a.current}</strong></span><span>Target: ${a.target}</span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${progress}%;background:${barColor};border-radius:3px;"></div></div></div>`;
         }
+        const linkHtml = a.link ? `<div style="margin-top:8px;"><a href="${a.link}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--beam);color:#fff;border-radius:4px;text-decoration:none;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">↗ ${a.link_label || 'Open Link'}</a></div>` : '';
         return `<div style="padding:12px;background:var(--surface2);border-radius:6px;margin-bottom:8px;${a.status==='done'?'opacity:0.6;':''}">
             <div style="display:flex;align-items:center;gap:8px;"><span class="status-badge ${s.cls}">${s.badge}</span><span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span><span class="dep-tag">${a.owner}</span>${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}</div>
             ${a.kpi ? `<div style="margin-top:6px;font-size:11px;"><span style="color:var(--text-muted);">KPI:</span> <span style="color:${kpiColor};font-weight:500;">${a.kpi}</span></div>` : ''}
             ${progressHtml}
+            ${linkHtml}
         </div>`;
     }
 
@@ -1605,6 +1876,115 @@
     function showSubDetail2(mainIdx, subIdx) {
         if (expandedSub === subIdx) { expandedSub = null; renderOverviewExpand(); return; }
         expandedSub = subIdx; renderOverviewExpand();
+    }
+
+    function renderMidLevel(rc, subs, color) {
+        // Coverage: sub-causes with at least one active/done action (merged with Team tab edits)
+        const subsWithAction = subs.filter(sc => getMergedActions(sc).some(a => a.status === 'active' || a.status === 'done'));
+        const coveragePct = subs.length ? Math.round(subsWithAction.length / subs.length * 100) : 0;
+
+        // Trend: aggregate indicator health
+        const allLI = subs.flatMap(sc => sc.leading_indicators || []);
+        const withData = allLI.filter(li => li.data && li.data.length >= 2);
+        const controlled = withData.filter(li => li.status === 'controlled').length;
+        const monitored = allLI.filter(li => li.status === 'monitored').length;
+        const worsening = withData.filter(li => li.status === 'worse' || li.status === 'rising').length;
+        const noData = allLI.filter(li => !li.data || li.data.length < 2).length;
+
+        let overallTrend, trendColor, trendIcon;
+        if (worsening > controlled) { overallTrend = 'Needs Attention'; trendColor = '#EF5350'; trendIcon = '\u26A0'; }
+        else if (controlled >= withData.length * 0.5) { overallTrend = 'Improving'; trendColor = '#4CAF50'; trendIcon = '\u2191'; }
+        else { overallTrend = 'Mixed'; trendColor = '#F9A825'; trendIcon = '\u2194'; }
+
+        const trendDetail = [
+            controlled ? `${controlled} controlled` : '',
+            monitored ? `${monitored} monitoring` : '',
+            worsening ? `${worsening} need attention` : '',
+            noData ? `${noData} no data` : ''
+        ].filter(Boolean).join(' \u00B7 ');
+
+        // Per sub-cause rows
+        const subRows = subs.map((sc, si) => {
+            const scLI = sc.leading_indicators || [];
+            const mergedSCActions = getMergedActions(sc);
+            const activeActions = mergedSCActions.filter(a => a.status === 'active').length;
+            const doneActions = mergedSCActions.filter(a => a.status === 'done').length;
+            const pendingActions = mergedSCActions.filter(a => a.status === 'pending').length;
+            const totalActions = mergedSCActions.length;
+            const owners = [...new Set(mergedSCActions.map(a => a.owner).filter(Boolean))].join(', ');
+
+            // Coverage status
+            let covIcon, covColor, covText;
+            if (doneActions + activeActions === 0) { covIcon = '\u26A0\uFE0F'; covColor = '#EF5350'; covText = 'No active work'; }
+            else if (pendingActions === 0) { covIcon = '\u2705'; covColor = '#4CAF50'; covText = `${doneActions + activeActions}/${totalActions} covered`; }
+            else { covIcon = '\uD83D\uDFE1'; covColor = '#F9A825'; covText = `${doneActions + activeActions}/${totalActions} covered`; }
+
+            // Indicator trends — get directional arrows
+            const trendArrows = scLI.map(li => {
+                if (!li.data || li.data.length < 2) return `<span title="${li.name}: no data" style="color:var(--text-muted);font-size:14px;">\u25CB</span>`;
+                const last = li.data[li.data.length - 1];
+                const prev = li.data[li.data.length - 2];
+                const liColor = getStatusColor(li.status);
+                if (li.status === 'monitored') return `<span title="${li.name}: ${last} (monitoring)" style="color:${liColor};font-size:14px;">\u25C9</span>`;
+                if (last < prev) return `<span title="${li.name}: ${prev}\u2192${last} \u2193" style="color:#4CAF50;font-size:14px;">\u2193</span>`;
+                if (last > prev) return `<span title="${li.name}: ${prev}\u2192${last} \u2191" style="color:#EF5350;font-size:14px;">\u2191</span>`;
+                return `<span title="${li.name}: ${last} (stable)" style="color:#F9A825;font-size:14px;">\u2192</span>`;
+            }).join(' ');
+
+            // Best indicator summary
+            const bestSummary = scLI.filter(li => li.data && li.data.length >= 2).map(li => {
+                const first = li.data[0];
+                const last = li.data[li.data.length - 1];
+                return `${li.name}: ${first}\u2192${last}`;
+            }).join(' | ');
+
+            return `<div style="display:grid;grid-template-columns:2fr 120px 120px 100px 1fr;gap:12px;align-items:center;padding:14px 16px;background:var(--surface2);border-radius:6px;margin-bottom:6px;cursor:pointer;border-left:3px solid ${covColor};transition:all 0.2s;" onclick="showSubDetail2(${rootCausesData.indexOf(rc)},${si})" onmouseover="this.style.borderColor='${color}'" onmouseout="this.style.borderColor='${covColor}'">
+                <div>
+                    <div style="font-size:13px;font-weight:600;">${sc.name}</div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">$${(sc.lagging.w2w_impact/1000).toFixed(0)}K</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-secondary);">${owners || '\u2014'}</div>
+                <div style="font-size:11px;color:${covColor};font-weight:500;">${covText}</div>
+                <div style="display:flex;gap:4px;align-items:center;">${trendArrows || '<span style="color:var(--text-muted);font-size:11px;">No indicators</span>'}</div>
+                <div style="font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${bestSummary}">${bestSummary || 'No data yet'}</div>
+            </div>`;
+        }).join('');
+
+        return `<div class="card" style="border-left:4px solid ${color};margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+                <div>
+                    <div style="font-size:11px;color:${color};text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Mid-Level Summary</div>
+                    <div style="font-size:20px;font-weight:600;letter-spacing:-0.02em;margin-top:4px;">${rc.name}</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${rc.description}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:28px;font-weight:300;color:${color};">${rc.lagging.pct_of_analyzed}%</div>
+                    <div style="font-size:11px;color:var(--text-muted);">$${(rc.lagging.w2w_impact/1000).toFixed(0)}K W2W ref</div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <div style="padding:16px;background:var(--bg);border-radius:8px;">
+                    <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Coverage</div>
+                    <div style="font-size:24px;font-weight:300;margin-top:4px;">${subsWithAction.length}/${subs.length} <span style="font-size:13px;color:var(--text-muted);">sub-causes with actions</span></div>
+                    <div style="margin-top:8px;height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+                        <div style="height:100%;width:${coveragePct}%;background:${coveragePct === 100 ? '#4CAF50' : coveragePct >= 75 ? '#F9A825' : '#EF5350'};border-radius:4px;transition:width 0.6s;"></div>
+                    </div>
+                </div>
+                <div style="padding:16px;background:var(--bg);border-radius:8px;">
+                    <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Overall Trend</div>
+                    <div style="font-size:24px;font-weight:300;margin-top:4px;color:${trendColor};">${trendIcon} ${overallTrend}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${trendDetail}</div>
+                </div>
+            </div>
+
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;">
+                <div style="display:grid;grid-template-columns:2fr 120px 120px 100px 1fr;gap:12px;padding:0 16px;">
+                    <span>Sub-Cause</span><span>Owner</span><span>Coverage</span><span>Trend</span><span>Key Indicator</span>
+                </div>
+            </div>
+            ${subRows}
+        </div>`;
     }
 
     function renderOverviewExpand() {
@@ -1653,11 +2033,13 @@
                     </div>`;
                 }).join('');
 
-                const actionsHtml = sc.actions.map(a => renderActionCard(a, sc)).join('');
+                const mergedInline = getMergedActions(sc);
+                const doneInline = mergedInline.filter(a => a.status === 'done').length;
+                const actionsHtml = mergedInline.map(a => renderActionCard(a, sc)).join('');
 
                 detailHtml = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
                     ${indicatorsHtml ? `<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;">Leading Indicators</div>${indicatorsHtml}` : ''}
-                    <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;margin-top:12px;">Actions (${doneAct}/${sc.actions.length})</div>
+                    <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;margin-top:12px;">Actions (${doneInline}/${mergedInline.length})</div>
                     ${actionsHtml}
                 </div>`;
             }
@@ -1714,22 +2096,55 @@
                 </div>`;
             }).join('');
 
-            const actionsHtml = sc.actions.map(a => renderActionCard(a, sc)).join('');
+            const mergedFull = getMergedActions(sc);
+            const doneFull = mergedFull.filter(a => a.status === 'done').length;
+            const actionsHtml = mergedFull.map(a => renderActionCard(a, sc)).join('');
 
+            // Pareto items belonging to this sub-cause (via pareto_codes match)
+            let paretoItemsHtml = '';
+            const codes = sc.pareto_codes || [];
+            if (codes.length && Array.isArray(paretoData)) {
+                const items = paretoData.filter(p => codes.includes(p.secondary_code)).sort((a,b) => b.value - a.value);
+                if (items.length) {
+                    const maxVal = Math.max(...items.map(p => p.value));
+                    const totalVal = items.reduce((s, p) => s + p.value, 0);
+                    const rows = items.map(p => {
+                        const barPct = (p.value / maxVal * 100).toFixed(1);
+                        return `<div class="pareto-bar-row">
+                            <div class="pareto-label"><strong>${p.item_id}</strong> <span style="color:var(--text-muted);font-size:11px;">${p.description}</span></div>
+                            <div class="pareto-bar-wrapper"><div class="pareto-bar-fill" style="width:${barPct}%;background:${color}"></div></div>
+                            <div class="pareto-value" style="color:${color}">$${(p.value/1000).toFixed(1)}K</div>
+                            <div class="pareto-cumul" style="font-size:10px;width:160px;" title="${p.findings}">${p.findings.substring(0,40)}${p.findings.length>40?'...':''}</div>
+                        </div>`;
+                    }).join('');
+                    paretoItemsHtml = `<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin:16px 0 8px;">Pareto Items (${items.length}) \u2014 $${(totalVal/1000).toFixed(0)}K total</div>${rows}`;
+                }
+            }
+
+            const scLinkHtml = sc.link ? `<div style="margin-top:12px;"><a href="${sc.link}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--beam);color:#fff;border-radius:4px;text-decoration:none;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">\u2197 ${sc.link_label || 'Open Link'}</a></div>` : '';
             subDetailHtml = `<div style="margin-top:16px;">
                 <div class="card" style="border-left:4px solid ${color};">
                     <div style="font-size:18px;font-weight:600;letter-spacing:-0.02em;">${sc.name}</div>
                     <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${sc.description}</div>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">$${(sc.lagging.w2w_impact/1000).toFixed(0)}K W2W ref \u2014 ${sc.lagging.items} items analyzed</div>
+                    ${scLinkHtml}
                 </div>
                 ${indicatorsHtml ? `<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin:16px 0 8px;">Leading Indicators</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;">${indicatorsHtml}</div>` : ''}
-                <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin:16px 0 8px;">Actions (${sc.actions.filter(a=>a.status==='done').length}/${sc.actions.length} done)</div>
+                <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin:16px 0 8px;">Actions (${doneFull}/${mergedFull.length} done)</div>
                 ${actionsHtml}
+                ${paretoItemsHtml}
             </div>`;
         }
 
+        // Mid-level summary — for all 4 buckets
+        let midLevelHtml = '';
+        if (rc.id === 'process' || rc.id === 'data' || rc.id === 'transactions' || rc.id === 'execution') {
+            midLevelHtml = renderMidLevel(rc, subs, color);
+        }
+
         panel.innerHTML = `<div style="padding:16px 0;">
-            <div style="font-size:11px;color:${color};text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:12px;">${rc.name} \u2014 Sub-Causes</div>
+            ${midLevelHtml}
+            <div style="font-size:11px;color:${color};text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:12px;">${midLevelHtml ? 'Drill Down \u2014 Sub-Causes' : rc.name + ' \u2014 Sub-Causes'}</div>
             <div style="display:grid;grid-template-columns:repeat(${subs.length},1fr);gap:12px;">${subBucketsHtml}</div>
             ${subDetailHtml}
         </div>`;

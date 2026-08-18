@@ -3,66 +3,671 @@
     "id": "process",
     "name": "Process",
     "description": "Physical flow doesn't match system flow. No defined steps to register movements.",
-    "lagging": { "w2w_impact": 203000, "pct_of_analyzed": 45.4 },
+    "lagging": {
+      "w2w_impact": 203000,
+      "pct_of_analyzed": 45.4
+    },
     "sub_causes": [
       {
         "id": "pid_flow",
         "name": "PID and FG Flow Mismanagement",
         "description": "PIDs not completing their closed loop. Unclear ownership and product type distinction.",
-        "lagging": { "w2w_impact": 140000, "items": 5 },
+        "pareto_codes": [
+          "PID and FG flow mismanagement due to unclear ownership and product type distinction"
+        ],
+        "lagging": {
+          "w2w_impact": 140000,
+          "items": 5
+        },
         "leading_indicators": [
-          { "name": "Trufig Short PIDs", "weeks": ["02.09","02.16","02.23","03.02","03.09","03.16","03.23"], "data": [27,28,31,33,34,47,59], "goal": null, "direction": "monitor", "status": "monitored" },
-          { "name": "PID Requested", "weeks": ["02.09","02.16","02.23","03.02","03.09","03.16","03.23"], "data": [13,1,3,6,1,1,5], "goal": 0, "direction": "down", "status": "rising" },
-          { "name": "WIP Error", "weeks": ["02.09","02.16","02.23","03.02","03.09","03.16","03.23"], "data": [15,25,37,49,30,10,0], "goal": 0, "direction": "down", "status": "controlled" }
+          {
+            "name": "Trufig Short PIDs",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26"
+            ],
+            "data": [
+              27,
+              28,
+              31,
+              33,
+              34,
+              47,
+              59,
+              51,
+              106,
+              40,
+              16
+            ],
+            "goal": null,
+            "direction": "monitor",
+            "status": "monitored"
+          },
+          {
+            "name": "PID Requested",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              13,
+              1,
+              3,
+              6,
+              1,
+              1,
+              5,
+              8,
+              11,
+              2,
+              2,
+              3
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "worse"
+          },
+          {
+            "name": "WIP Error",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              15,
+              25,
+              37,
+              49,
+              30,
+              10,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "controlled"
+          },
+          {
+            "name": "Issue Kit Error",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              344,
+              109,
+              167
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "worse"
+          },
+          {
+            "name": "Teardown PID",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "controlled"
+          },
+          {
+            "name": "Sonance PIDs",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              4,
+              5,
+              21,
+              0,
+              20
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "worse"
+          },
+          {
+            "name": "Pending Completion",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              0,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "controlled"
+          }
         ],
         "actions": [
-          { "title": "Trufig PID monitoring — demand-driven, open PIDs are normal", "owner": "Stephanie", "status": "active", "kpi": "Trufig Short PIDs", "baseline": 27, "current": 59, "target": null },
-          { "title": "Establish checkpoints and owners for PID closure", "owner": "Stephanie", "status": "done", "kpi": "PID Requested", "baseline": 13, "current": 1, "target": 0 },
-          { "title": "Confirm physical quantities vs PS (2185)", "owner": "Stephanie", "status": "done", "kpi": "PID Requested", "baseline": null, "current": null, "target": null },
-          { "title": "Confirm physical quantities vs PS (2220)", "owner": "Stephanie", "status": "active", "kpi": "PID Requested", "baseline": null, "current": null, "target": null },
-          { "title": "Close / Delete past due PIDs", "owner": "Stephanie", "status": "active", "kpi": "Trufig Short PIDs", "baseline": 47, "current": 47, "target": 0 },
-          { "title": "Create SOP for PID creation and closure", "owner": "Stephanie", "status": "pending", "kpi": "PID Requested", "baseline": null, "current": null, "target": null }
+          {
+            "title": "Trufig PID monitoring \u2014 demand-driven, open PIDs are normal",
+            "owner": "Stephanie",
+            "status": "active",
+            "kpi": "Trufig Short PIDs",
+            "baseline": 27,
+            "current": 59,
+            "target": null
+          },
+          {
+            "title": "Establish checkpoints and owners for PID closure",
+            "owner": "Stephanie",
+            "status": "done",
+            "kpi": "PID Requested",
+            "baseline": 13,
+            "current": 1,
+            "target": 0
+          },
+          {
+            "title": "Confirm physical quantities vs PS (2185)",
+            "owner": "Stephanie",
+            "status": "done",
+            "kpi": "PID Requested",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Confirm physical quantities vs PS (2220)",
+            "owner": "Stephanie",
+            "status": "active",
+            "kpi": "PID Requested",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Close / Delete past due PIDs",
+            "owner": "Stephanie",
+            "status": "active",
+            "kpi": "Trufig Short PIDs",
+            "baseline": 47,
+            "current": 47,
+            "target": 0
+          },
+          {
+            "title": "Create SOP for PID creation and closure",
+            "owner": "Stephanie",
+            "status": "pending",
+            "kpi": "PID Requested",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Issue to Kit \u2014 waiting Phase 1 (Peter Winter)",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "Kit issue active in PS",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo",
+            "blocker": "Phase 1"
+          },
+          {
+            "title": "Grille Kit SKU creation \u2014 pending PS Item IDs",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "Kit issuing active in PS",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo",
+            "blocker": "Master Data Capacity"
+          },
+          {
+            "title": "Close / Delete past due, duplicated or other wise not needed PIDs",
+            "owner": "Stephanie",
+            "status": "active",
+            "kpi": "Trufig Short PIDs",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Stephanie"
+          },
+          {
+            "title": "Reviewing materials for holds, and for soft reserves and updating pid process",
+            "owner": "Stephanie",
+            "status": "pending",
+            "kpi": "soft reserves do not appears, location and material holds are released and short pids reduced",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Stephanie"
+          }
         ]
       },
       {
         "id": "known_issues",
         "name": "Known Inventory Issues Without Corrective Action",
         "description": "Identified issues without defined resolution path.",
-        "lagging": { "w2w_impact": 42000, "items": 2 },
+        "pareto_codes": [
+          "Known inventory issues without defined corrective action plan"
+        ],
+        "lagging": {
+          "w2w_impact": 42000,
+          "items": 2
+        },
         "leading_indicators": [
-          { "name": "Open Issues Without Plan", "weeks": [], "data": [], "goal": 0, "direction": "down", "status": "new_tracking" },
-          { "name": "Incorrect BOM", "weeks": ["02.09","02.16","02.23","03.02","03.09","03.16","03.23"], "data": [0,3,1,3,5,1,2], "goal": 0, "direction": "down", "status": "volatile" }
+          {
+            "name": "Open Issues Without Plan",
+            "weeks": [],
+            "data": [],
+            "goal": 0,
+            "direction": "down",
+            "status": "new_tracking"
+          },
+          {
+            "name": "Incorrect BOM",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              0,
+              3,
+              1,
+              3,
+              5,
+              1,
+              2,
+              3,
+              5,
+              6,
+              0,
+              3
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "worse"
+          }
         ],
         "actions": [
-          { "title": "Confirm IS bracket component vs FG identification", "owner": "Rigo", "status": "done", "kpi": "Open Issues Without Plan", "baseline": null, "current": null, "target": null },
-          { "title": "Create and propose BOMs for ATs", "owner": "Rigo", "status": "done", "kpi": "Open Issues Without Plan", "baseline": null, "current": null, "target": null },
-          { "title": "Create and propose BOMs for SPL3s", "owner": "Rigo", "status": "done", "kpi": "Open Issues Without Plan", "baseline": null, "current": null, "target": null },
-          { "title": "Wedge cabinet BOM — buy from Bonita or make in-house", "owner": "Rigo", "status": "pending", "kpi": "Open Issues Without Plan", "baseline": null, "current": null, "target": null },
-          { "title": "PPX cabinetry creation to reduce Bonita Custom postings", "owner": "Rigo", "status": "pending", "kpi": "Open Issues Without Plan", "baseline": null, "current": null, "target": null }
+          {
+            "title": "Confirm IS bracket component vs FG identification",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "Open Issues Without Plan",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Create and propose BOMs for ATs",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "Open Issues Without Plan",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Create and propose BOMs for SPL3s",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "Open Issues Without Plan",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Wedge cabinet BOM \u2014 buy from Bonita or make in-house",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "Open Issues Without Plan",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Trevor"
+          },
+          {
+            "title": "PPX cabinetry creation to reduce Bonita Custom postings",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "Open Issues Without Plan",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Trevor"
+          },
+          {
+            "title": "MTS vs Physical reconciliation",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "Train others on how to reconcile system transactions to physical counts.",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo"
+          },
+          {
+            "title": "Review/Update order cancellation process in PS",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "SOP created for order cancellations",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo",
+            "blocker": "Waiting for a copy of the current Order Cancellation SOP."
+          },
+          {
+            "title": "Wedge Cabinet Assemblies \u2014 BOM structure complete. Blocked: Engineering drawing updates \u2192 then PS subassembly BOM creation",
+            "owner": "Rigo",
+            "status": "alert",
+            "kpi": "100% of Wedge products are setup in PS.",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo",
+            "blocker": "Master Data Capacity"
+          },
+          {
+            "title": "Audit of Finished Goods",
+            "owner": "Rigo",
+            "status": "pending",
+            "kpi": "Top 10 Movers and Value are audited and RC.",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo"
+          },
+          {
+            "title": "Finished Goods - Organization, Bins, Pick to Ship",
+            "owner": "Rigo",
+            "status": "alert",
+            "kpi": "Warehouse is able to use Pick to Ship",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo"
+          },
+          {
+            "title": "Bin-to-Bin SOP",
+            "owner": "Rigo",
+            "status": "active",
+            "kpi": "Warehouse team is implementing SOP",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo"
+          },
+          {
+            "title": "Reviewing CAB.AL.CUSTOM ordering and receiving",
+            "owner": "Lidia",
+            "status": "pending",
+            "kpi": "Will not appear on short pids, and receiving will always the 1:1 ratio",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Stephanie"
+          }
         ]
       },
       {
         "id": "cancellation",
         "name": "Undefined Cancellation and Notification Process",
         "description": "No process between ERP, MRP and inventory when orders are cancelled.",
-        "lagging": { "w2w_impact": 11000, "items": 1 },
-        "leading_indicators": [],
+        "pareto_codes": [
+          "Undefined cancellation and notification process between ERP, MRP and ISS"
+        ],
+        "lagging": {
+          "w2w_impact": 11000,
+          "items": 1
+        },
+        "leading_indicators": [
+          {
+            "name": "Duplicate PIDs Detected",
+            "weeks": [],
+            "data": [],
+            "goal": 0,
+            "direction": "down",
+            "status": "new_tracking"
+          }
+        ],
         "actions": [
-          { "title": "Review order cancellation process in PS", "owner": "Rigo", "status": "pending", "kpi": null, "baseline": null, "current": null, "target": null }
+          {
+            "title": "Review order cancellation process in PS",
+            "owner": "Rigo",
+            "status": "pending",
+            "kpi": null,
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Automated duplicate PID detection system (runs Mon/Tue/Wed via Ops Dashboard)",
+            "owner": "Miguel",
+            "status": "done",
+            "kpi": "Duplicate PIDs Detected",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          }
         ]
       },
       {
         "id": "scrap_process",
         "name": "Scrap Generated Due to Undefined Process",
         "description": "No control preventing extra material pull before reporting scrap. Now defined and monitored.",
-        "lagging": { "w2w_impact": 10000, "items": 1 },
+        "pareto_codes": [
+          "Scrap generated due to undefined or incomplete process"
+        ],
+        "lagging": {
+          "w2w_impact": 10000,
+          "items": 1
+        },
         "leading_indicators": [
-          { "name": "Scrap Forms Submitted", "weeks": [], "data": [], "goal": null, "direction": "up", "status": "new_tracking" }
+          {
+            "name": "Scrap Forms Submitted",
+            "weeks": [
+              "01.16",
+              "01.23",
+              "01.30",
+              "02.06",
+              "02.13",
+              "02.27",
+              "03.06",
+              "03.20"
+            ],
+            "data": [
+              1,
+              2,
+              0,
+              4,
+              3,
+              5,
+              8,
+              16
+            ],
+            "goal": null,
+            "direction": "up",
+            "status": "controlled"
+          },
+          {
+            "name": "Weekly Scrap Value ($)",
+            "weeks": [
+              "01.16",
+              "01.23",
+              "01.30",
+              "02.06",
+              "02.13",
+              "02.27",
+              "03.06",
+              "03.20"
+            ],
+            "data": [
+              23,
+              72,
+              0,
+              125,
+              121,
+              157,
+              466,
+              5605
+            ],
+            "goal": null,
+            "direction": "monitor",
+            "status": "monitored"
+          }
         ],
         "actions": [
-          { "title": "Scrap SOP completed", "owner": "Stephanie", "status": "done", "kpi": "Scrap Forms Submitted", "baseline": 0, "current": null, "target": null },
-          { "title": "Broader use of scrap form (fab + finish + paint)", "owner": "Stephanie", "status": "done", "kpi": "Scrap Forms Submitted", "baseline": null, "current": null, "target": null },
-          { "title": "2185 Scrap Review — track for DMAICs/kaizens", "owner": "Stephanie", "status": "done", "kpi": "Scrap Forms Submitted", "baseline": null, "current": null, "target": null }
+          {
+            "title": "Scrap SOP completed",
+            "owner": "Stephanie",
+            "status": "done",
+            "kpi": "Scrap Forms Submitted",
+            "baseline": 0,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Broader use of scrap form (fab + finish + paint)",
+            "owner": "Stephanie",
+            "status": "done",
+            "kpi": "Scrap Forms Submitted",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "2185 Scrap Review \u2014 track for DMAICs/kaizens",
+            "owner": "Stephanie",
+            "status": "done",
+            "kpi": "Scrap Forms Submitted",
+            "baseline": null,
+            "current": null,
+            "target": null
+          }
         ]
       }
     ]
@@ -71,53 +676,406 @@
     "id": "data",
     "name": "Data",
     "description": "System data doesn't reflect reality. Wrong SKUs, unmigrated stock, incorrect tagging.",
-    "lagging": { "w2w_impact": 163000, "pct_of_analyzed": 36.4 },
+    "lagging": {
+      "w2w_impact": 163000,
+      "pct_of_analyzed": 36.4
+    },
     "sub_causes": [
       {
         "id": "sku_selection",
         "name": "Incorrect SKU Selection During Cycle Count",
         "description": "Wrong SKU selected due to description-based identification. No barcode/scanning.",
-        "lagging": { "w2w_impact": 95000, "items": 5 },
+        "pareto_codes": [
+          "Incorrect SKU selection during cycle count due to description-based identification"
+        ],
+        "lagging": {
+          "w2w_impact": 95000,
+          "items": 5
+        },
         "leading_indicators": [
-          { "name": "Count Requested", "weeks": ["02.09","02.16","02.23","03.02","03.09","03.16","03.23"], "data": [26,1,9,3,4,4,7], "goal": 0, "direction": "down", "status": "rising" },
-          { "name": "Invoice Errors (Bonita)", "weeks": [], "data": [], "goal": 0, "direction": "down", "status": "new_tracking" }
+          {
+            "name": "Count Requested",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              26,
+              1,
+              9,
+              3,
+              4,
+              4,
+              7,
+              15,
+              25,
+              0,
+              0,
+              0
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "controlled"
+          },
+          {
+            "name": "Invoice Errors (Bonita)",
+            "weeks": [],
+            "data": [],
+            "goal": 0,
+            "direction": "down",
+            "status": "new_tracking"
+          }
         ],
         "actions": [
-          { "title": "Pre-Receiving Invoice Verification", "owner": "Carlos", "status": "done", "kpi": "Invoice Errors (Bonita)", "baseline": null, "current": null, "target": 0 },
-          { "title": "Review all custom BOM orders to Bonita", "owner": "Carlos", "status": "done", "kpi": "Invoice Errors (Bonita)", "baseline": null, "current": null, "target": null },
-          { "title": "Create SOP for ordering material with correct nomenclature", "owner": "Carlos", "status": "done", "kpi": "Count Requested", "baseline": 26, "current": 4, "target": 0 },
-          { "title": "Long-term: tagging system for Bonita with James SKUs", "owner": "Carlos", "status": "pending", "kpi": "Invoice Errors (Bonita)", "baseline": null, "current": null, "target": 0 },
-          { "title": "V5 cross-reference for count sheet accuracy", "owner": "Lidia", "status": "active", "kpi": "Count Requested", "baseline": 26, "current": 4, "target": 0 }
+          {
+            "title": "Pre-Receiving Invoice Verification",
+            "owner": "Carlos",
+            "status": "done",
+            "kpi": "Invoice Errors (Bonita)",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          },
+          {
+            "title": "Review all custom BOM orders to Bonita",
+            "owner": "Carlos",
+            "status": "done",
+            "kpi": "Invoice Errors (Bonita)",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Create SOP for ordering material with correct nomenclature",
+            "owner": "Carlos",
+            "status": "done",
+            "kpi": "Count Requested",
+            "baseline": 26,
+            "current": 4,
+            "target": 0
+          },
+          {
+            "title": "Long-term: tagging system for Bonita with James SKUs",
+            "owner": "Carlos",
+            "status": "done",
+            "kpi": "Invoice Errors (Bonita)",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          },
+          {
+            "title": "V5 cross-reference for count sheet accuracy",
+            "owner": "Lidia",
+            "status": "active",
+            "kpi": "Count Requested",
+            "baseline": 26,
+            "current": 4,
+            "target": 0
+          },
+          {
+            "title": "PeopleSoft receiving label system \u2014 every received material gets a label that matches the system SKU",
+            "owner": "Miguel",
+            "support": "Lidia, Carlos",
+            "status": "done",
+            "kpi": "Count Requested",
+            "baseline": 26,
+            "current": 7,
+            "target": 0
+          },
+          {
+            "title": "Adopt Sonance CCC-NNNN nomenclature standard \u2014 Minden seq 5000+, sub-assemblies 710-719. Agreement complete (Trevor/Product + Alex Bartagni/Engineering + Miguel). Pending Master Data rollout plan.",
+            "owner": "Miguel",
+            "support": "Master Data",
+            "status": "pending",
+            "kpi": "Count Requested",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          }
         ]
       },
       {
         "id": "bom_reviews",
         "name": "BOM Reviews",
         "description": "BOM verification, legacy component deactivation, stock not migrated to new SKU.",
-        "lagging": { "w2w_impact": 47000, "items": 3 },
+        "link": "https://bom-correction-log.netlify.app/admin/",
+        "link_label": "Open BOM Correction Admin",
+        "pareto_codes": [
+          "Stock not migrated to new SKU or revision"
+        ],
+        "lagging": {
+          "w2w_impact": 47000,
+          "items": 3
+        },
         "leading_indicators": [
-          { "name": "SKUs Pending Deactivation", "weeks": [], "data": [], "goal": 0, "direction": "down", "status": "new_tracking" },
-          { "name": "BOMs Verified", "weeks": [], "data": [], "goal": null, "direction": "up", "status": "new_tracking" }
+          {
+            "name": "BOMs Flagged at Picking",
+            "weeks": [
+              "04.13",
+              "04.20",
+              "04.27",
+              "05.04",
+              "05.11",
+              "05.18",
+              "05.25",
+              "06.01",
+              "06.08",
+              "06.15",
+              "06.22",
+              "06.29"
+            ],
+            "data": [
+              3,
+              17,
+              20,
+              24,
+              11,
+              7,
+              5,
+              6,
+              26,
+              12,
+              12,
+              10
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "monitored"
+          },
+          {
+            "name": "BOMs Corrected (Master Data)",
+            "weeks": [
+              "04.13",
+              "04.20",
+              "04.27",
+              "05.04",
+              "05.11",
+              "05.18",
+              "05.25",
+              "06.01",
+              "06.08",
+              "06.15",
+              "06.22",
+              "06.29"
+            ],
+            "data": [
+              0,
+              10,
+              13,
+              15,
+              11,
+              5,
+              5,
+              10,
+              1,
+              36,
+              15,
+              1
+            ],
+            "goal": null,
+            "direction": "up",
+            "status": "controlled"
+          },
+          {
+            "name": "Open Backlog",
+            "weeks": [
+              "04.13",
+              "04.20",
+              "04.27",
+              "05.04",
+              "05.11",
+              "05.18",
+              "05.25",
+              "06.01",
+              "06.08",
+              "06.15",
+              "06.22",
+              "06.29"
+            ],
+            "data": [
+              3,
+              10,
+              17,
+              26,
+              26,
+              28,
+              28,
+              24,
+              49,
+              25,
+              22,
+              31
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "worse"
+          },
+          {
+            "name": "SKUs Pending Deactivation",
+            "weeks": [],
+            "data": [],
+            "goal": 0,
+            "direction": "down",
+            "status": "new_tracking"
+          },
+          {
+            "name": "BOMs Verified",
+            "weeks": [],
+            "data": [],
+            "goal": null,
+            "direction": "up",
+            "status": "new_tracking"
+          }
         ],
         "actions": [
-          { "title": "Create list of legacy components for deactivation", "owner": "Alex", "status": "done", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": 0 },
-          { "title": "Add item costs to deactivation list", "owner": "Alex", "status": "done", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": null },
-          { "title": "Capture deactivation in NPD process", "owner": "Alex", "status": "done", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": null },
-          { "title": "Push for PPX cabinetry creation", "owner": "Rigo", "status": "pending", "kpi": "SKUs Pending Deactivation", "baseline": null, "current": null, "target": null },
-          { "title": "Wedge cabinet BOM proposal", "owner": "Rigo", "status": "pending", "kpi": "BOMs Verified", "baseline": null, "current": null, "target": null },
-          { "title": "MISC.MAGNET.CUP — Compare physical consumption vs BOM in PeopleSoft, flag disconnections and correct BOM", "owner": "Juan Ruedas", "support": "Rigo Lopez", "status": "active", "kpi": "BOMs Verified", "baseline": null, "current": null, "target": null }
+          {
+            "title": "BOM Correction Log app at picking.mindenops.com \u2014 Lidia & pickers report incorrect BOMs via photo + AI",
+            "owner": "Miguel",
+            "support": "Lidia",
+            "status": "done",
+            "kpi": "BOMs Flagged at Picking",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          },
+          {
+            "title": "Create list of legacy components for deactivation",
+            "owner": "Alex",
+            "status": "done",
+            "kpi": "SKUs Pending Deactivation",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          },
+          {
+            "title": "Add item costs to deactivation list",
+            "owner": "Alex",
+            "status": "done",
+            "kpi": "SKUs Pending Deactivation",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Capture deactivation in NPD process",
+            "owner": "Alex",
+            "status": "done",
+            "kpi": "SKUs Pending Deactivation",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Push for PPX cabinetry creation",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "SKUs Pending Deactivation",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Trevor"
+          },
+          {
+            "title": "Wedge cabinet BOM proposal",
+            "owner": "Rigo",
+            "status": "done",
+            "kpi": "BOMs Verified",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo"
+          },
+          {
+            "title": "MISC.MAGNET.CUP \u2014 Compare physical consumption vs BOM in PeopleSoft, flag disconnections and correct BOM",
+            "owner": "Juan Ruedas",
+            "support": "Rigo Lopez",
+            "status": "active",
+            "kpi": "BOMs Verified",
+            "baseline": null,
+            "current": null,
+            "target": null
+          },
+          {
+            "title": "Complete physical count and variance investigation of 41 VXQ SKUs by 06/30/26 documenting all discrepancies.",
+            "owner": "Rigo",
+            "status": "active",
+            "kpi": "100% of skus counted.",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo"
+          },
+          {
+            "title": "XPC ad hoc cycle count.",
+            "owner": "Rigo",
+            "status": "active",
+            "kpi": "Complete count by 07/01/26. Investigate material variances.",
+            "baseline": null,
+            "current": null,
+            "target": null,
+            "support": "Rigo"
+          }
         ]
       },
       {
         "id": "sku_tagging",
         "name": "Incorrect SKU Selected During Inventory Tagging",
         "description": "Similar descriptions cause wrong SKU selection when tagging inventory.",
-        "lagging": { "w2w_impact": 21000, "items": 2 },
+        "pareto_codes": [
+          "Incorrect SKU selected during inventory tagging due to similar descriptions"
+        ],
+        "lagging": {
+          "w2w_impact": 21000,
+          "items": 2
+        },
         "leading_indicators": [
-          { "name": "Tagging Errors Found", "weeks": [], "data": [], "goal": 0, "direction": "down", "status": "new_tracking" }
+          {
+            "name": "Tagging Errors Found",
+            "weeks": [],
+            "data": [],
+            "goal": 0,
+            "direction": "down",
+            "status": "new_tracking"
+          },
+          {
+            "name": "Items Flagged by Ops Dashboard Skill",
+            "weeks": [],
+            "data": [],
+            "goal": 0,
+            "direction": "down",
+            "status": "new_tracking"
+          }
         ],
         "actions": [
-          { "title": "Standardize labeling with unique identifiers", "owner": "Alberto", "status": "pending", "kpi": "Tagging Errors Found", "baseline": null, "current": null, "target": 0 }
+          {
+            "title": "Alex maintains tagging issues with ISS \u2014 ongoing system-side corrections",
+            "owner": "Alex",
+            "support": "ISS",
+            "status": "active",
+            "kpi": "Tagging Errors Found",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          },
+          {
+            "title": "Operations Dashboard skill identifies tagging items (runs Mon/Tue/Wed)",
+            "owner": "Miguel",
+            "status": "done",
+            "kpi": "Items Flagged by Ops Dashboard Skill",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          }
         ]
       }
     ]
@@ -126,20 +1084,86 @@
     "id": "transactions",
     "name": "Transactions",
     "description": "Established procedures not followed. Manual adjustments without validation.",
-    "lagging": { "w2w_impact": 65000, "pct_of_analyzed": 14.5 },
+    "lagging": {
+      "w2w_impact": 65000,
+      "pct_of_analyzed": 14.5
+    },
     "sub_causes": [
       {
         "id": "adjustments",
         "name": "Established Adjustment Process Not Followed",
         "description": "Manual adjustments without dual validation. Now routed through Stephanie for approval.",
-        "lagging": { "w2w_impact": 65000, "items": 4 },
+        "pareto_codes": [
+          "Established adjustment process not followed during cycle count"
+        ],
+        "lagging": {
+          "w2w_impact": 65000,
+          "items": 4
+        },
         "leading_indicators": [
-          { "name": "Adj Requested", "weeks": ["02.09","02.16","02.23","03.02","03.09","03.16","03.23"], "data": [10,20,1,1,1,1,0], "goal": 0, "direction": "down", "status": "controlled" }
+          {
+            "name": "Adj Requested",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              10,
+              20,
+              1,
+              1,
+              1,
+              1,
+              1,
+              7,
+              0,
+              0,
+              0,
+              0
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "controlled"
+          }
         ],
         "actions": [
-          { "title": "Cycle count program 2026 — dual validation", "owner": "Stephanie", "status": "done", "kpi": "Adj Requested", "baseline": 20, "current": 1, "target": 0 },
-          { "title": "CC adjustments routed through Stephanie for approval", "owner": "Stephanie", "status": "done", "kpi": "Adj Requested", "baseline": 20, "current": 1, "target": 0 },
-          { "title": "Cycle count process document created and shared", "owner": "Stephanie", "status": "done", "kpi": "Adj Requested", "baseline": null, "current": null, "target": null }
+          {
+            "title": "Cycle count program 2026 \u2014 dual validation",
+            "owner": "Stephanie",
+            "status": "done",
+            "kpi": "Adj Requested",
+            "baseline": 20,
+            "current": 1,
+            "target": 0
+          },
+          {
+            "title": "CC adjustments routed through Stephanie for approval",
+            "owner": "Stephanie",
+            "status": "done",
+            "kpi": "Adj Requested",
+            "baseline": 20,
+            "current": 1,
+            "target": 0
+          },
+          {
+            "title": "Cycle count process document created and shared",
+            "owner": "Stephanie",
+            "status": "done",
+            "kpi": "Adj Requested",
+            "baseline": null,
+            "current": null,
+            "target": null
+          }
         ]
       }
     ]
@@ -148,20 +1172,77 @@
     "id": "execution",
     "name": "Execution",
     "description": "Physical operations not performed correctly on the floor.",
-    "lagging": { "w2w_impact": 17000, "pct_of_analyzed": 3.7 },
+    "lagging": {
+      "w2w_impact": 17000,
+      "pct_of_analyzed": 3.7
+    },
     "sub_causes": [
       {
         "id": "pallet_labeling",
         "name": "Incorrect Pallet Labeling During Bin-to-Bin Movement",
         "description": "Material moved without proper identification. Pallets mislabeled during transfers.",
-        "lagging": { "w2w_impact": 17000, "items": 1 },
+        "pareto_codes": [
+          "Incorrect pallet labeling during bin-to-bin movement"
+        ],
+        "lagging": {
+          "w2w_impact": 17000,
+          "items": 1
+        },
         "leading_indicators": [
-          { "name": "Transfer Needed", "weeks": ["02.09","02.16","02.23","03.02","03.09","03.16","03.23"], "data": [0,1,1,2,3,6,6], "goal": 0, "direction": "down", "status": "rising" }
+          {
+            "name": "Transfer Needed",
+            "weeks": [
+              "02.09.26",
+              "02.16.26",
+              "02.23.26",
+              "03.02.26",
+              "03.09.26",
+              "03.16.26",
+              "03.23.26",
+              "3.30.26",
+              "04.06.26",
+              "04.20.26",
+              "04.27.26",
+              "05.04.26"
+            ],
+            "data": [
+              0,
+              1,
+              1,
+              2,
+              3,
+              6,
+              6,
+              12,
+              4,
+              0,
+              10,
+              36
+            ],
+            "goal": 0,
+            "direction": "down",
+            "status": "worse"
+          }
         ],
         "actions": [
-          { "title": "Develop labeling system for received material", "owner": "Alberto", "status": "done", "kpi": "Transfer Needed", "baseline": 0, "current": 6, "target": 0 },
-          { "title": "Add internal label for pieces made in house", "owner": "Alberto", "status": "pending", "kpi": "Transfer Needed", "baseline": null, "current": null, "target": 0 },
-          { "title": "Implement labeling system across warehouse", "owner": "Alberto", "status": "pending", "kpi": "Transfer Needed", "baseline": null, "current": null, "target": 0 }
+          {
+            "title": "Add internal label for pieces made in house",
+            "owner": "Alberto",
+            "status": "pending",
+            "kpi": "Transfer Needed",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          },
+          {
+            "title": "Implement labeling system across warehouse",
+            "owner": "Alberto",
+            "status": "pending",
+            "kpi": "Transfer Needed",
+            "baseline": null,
+            "current": null,
+            "target": 0
+          }
         ]
       }
     ]

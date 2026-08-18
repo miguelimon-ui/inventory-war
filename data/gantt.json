@@ -12,6 +12,6 @@
   {"id":"11577160930","name":"Pilot with top 5 high-impact SKUs","group":"Phase 3 Roll out","owner":"Miguel","status":"Pending","start":"2026-04-08","end":"2026-04-08","duration":1,"color":"#00B2A9","critical":true},
   {"id":"11577160914","name":"Cycle count monitoring at pick locations","group":"Phase 3 Roll out","owner":"Production","status":"Pending","start":"2026-04-08","end":"2026-04-09","duration":1,"color":"#00B2A9"},
   {"id":"11577177369","name":"Expand picking to additional product families","group":"Phase 3 Roll out","owner":"Production","status":"Pending","start":"2026-04-10","end":"2026-04-14","duration":3,"color":"#00B2A9","critical":true},
-  {"id":"11577160738","name":"Go-live full rollout","group":"Phase 3 Roll out","owner":"Miguel","status":"Pending","start":"2026-04-15","end":"2026-04-15","duration":1,"color":"#00B2A9","critical":true},
+  {"id":"11577160738","name":"Go-live full rollout","group":"Phase 3 Roll out","owner":"Miguel","status":"Done","start":"2026-04-15","end":"2026-04-15","duration":1,"color":"#00B2A9","critical":true},
   {"id":"maintain","name":"Maintain the System","group":"Maintaining","owner":"Production","status":"Ongoing","start":null,"end":null,"duration":null,"color":"#4CAF50"}
 ]

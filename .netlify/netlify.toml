@@ -1,13 +1,13 @@
-functionsDirectory = "C:\\Users\\miguell\\inventory-war\\netlify\\functions"
+functionsDirectory = "/Users/miguellimon/Claude/repos/inventory-war/netlify/functions"
 functionsDirectoryOrigin = "config-v1"
 redirectsOrigin = "config"
 plugins = []
 headers = []
 
 [build]
-publish = "C:\\Users\\miguell\\inventory-war"
+publish = "/Users/miguellimon/Claude/repos/inventory-war"
 publishOrigin = "config"
-functions = "C:\\Users\\miguell\\inventory-war\\netlify\\functions"
+functions = "/Users/miguellimon/Claude/repos/inventory-war/netlify/functions"
 
 [build.environment]
 
@@ -67,6 +67,18 @@ force = false
 [[redirects]]
 from = "/api/asana-tasks"
 to = "/.netlify/functions/asana-tasks"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/api/five-whys"
+to = "/.netlify/functions/five-whys"
 status = 200.0
 force = false
 
