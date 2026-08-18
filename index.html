@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory War — Pareto Tracking</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -387,7 +388,7 @@
                 <div class="card" style="border-left:4px solid var(--beam);">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <div class="card-title" style="margin-bottom:0;">5 Whys — Root Cause Analysis</div>
-                        <button onclick="document.getElementById('fiveWhysPanel').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;">×</button>
+                        <button onclick="closeFiveWhys()" style="background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:12px;font-family:inherit;padding:4px 12px;border-radius:4px;">Close</button>
                     </div>
                     <div style="margin-top:12px;">
                         <input type="text" id="fiveWhysProblem" placeholder="What's the problem? (e.g., MISC.MAGNET.CUP shows 623 in PS but only 3 physical)" style="width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;">
@@ -547,7 +548,8 @@
                             <th>Status</th>
                             <th>KPI</th>
                             <th>Owner</th>
-                            <th>Support</th>
+                            <th>Start</th>
+                            <th>Due</th>
                         </tr>
                     </thead>
                     <tbody id="actionsBody"></tbody>
@@ -579,8 +581,7 @@
                 </div>
                 <button onclick="loadBOMReviews()" style="padding:8px 16px;border:1px solid var(--beam);background:transparent;color:var(--beam);cursor:pointer;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;text-transform:uppercase;letter-spacing:0.05em;">Refresh</button>
             </div>
-            <div id="bomLocalActions" style="margin-top:12px;"></div>
-            <div class="card-title" style="margin-top:20px;margin-bottom:8px;">Asana — Master Data/IT Minden Tasks</div>
+            <div id="bomLocalActions" style="display:none;"></div>
             <div id="bomReviewsList">
                 <div style="color:var(--text-muted);padding:20px;text-align:center;font-size:12px;">Click Refresh to load Asana tasks</div>
             </div>
@@ -705,8 +706,9 @@
                         <td>${a.title}</td>
                         <td><span class="status-badge ${sc}">${a.status.toUpperCase()}</span></td>
                         <td>${a.kpi || '—'}</td>
-                        <td>${a.owner}</td>
-                        <td>${a.support || '—'}</td>
+                        <td>${a.owner || '—'}</td>
+                        <td>${a.start_date || '—'}</td>
+                        <td style="${a.due_date && new Date(a.due_date)<new Date() && a.status!=='done' ? 'color:#EF5350;font-weight:600;' : ''}">${a.due_date || '—'}${a.due_date && new Date(a.due_date)<new Date() && a.status!=='done' ? ' ⚠' : ''}</td>
                     </tr>`);
                 });
             });
@@ -849,7 +851,15 @@
     // ===== PICKING GANTT (DYNAMIC) =====
 
     async function loadGantt() {
-        const data = await apiGet('gantt');
+        // Try live Monday data first, fallback to blob/JSON
+        let data = null;
+        if (!isLocal) {
+            try {
+                const r = await fetch('/api/monday-gantt');
+                if (r.ok) data = await r.json();
+            } catch(e) {}
+        }
+        if (!data) data = await apiGet('gantt');
         if (!data) return;
 
         const container = document.getElementById('pickingGantt');
@@ -906,14 +916,27 @@
             </div>`;
         });
 
+        // Add "today" marker line
+        const today = new Date();
+        if (today >= minDate && today <= maxDate) {
+            const todayPct = ((today - minDate) / (maxDate - minDate) * 100).toFixed(2);
+            html += `<div style="position:relative;height:0;">
+                <div style="position:absolute;left:calc(280px + (100% - 280px) * ${todayPct} / 100);top:-${validTasks.length * 46 + 80}px;width:2px;height:${validTasks.length * 46 + 80}px;background:#EF5350;z-index:10;opacity:0.7;"></div>
+                <div style="position:absolute;left:calc(280px + (100% - 280px) * ${todayPct} / 100 - 20px);top:-${validTasks.length * 46 + 95}px;font-size:9px;color:#EF5350;font-weight:600;z-index:11;white-space:nowrap;">TODAY</div>
+            </div>`;
+        }
+
         container.innerHTML = html;
-        document.getElementById('ganttSource').textContent = 'Source: Monday.com board — Picking App Implementation Gantt';
+        document.getElementById('ganttSource').textContent = 'Live from Monday.com board — synced on page load';
     }
     loadGantt();
 
     // ===== TEAM (DYNAMIC) =====
     function renderTeamCard(owner, idx) {
-        const respHtml = owner.responsibilities.map(r => `<li>${r}</li>`).join('');
+        const respHtml = owner.responsibilities.map((r, ri) => `<li style="display:flex;align-items:center;gap:6px;">
+            <span style="flex:1;cursor:text;" onclick="event.stopPropagation();editResp(${idx},${ri})" title="Click to edit">${r}</span>
+            <span onclick="event.stopPropagation();removeResp(${idx},${ri})" style="color:var(--text-muted);cursor:pointer;font-size:14px;opacity:0;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0" title="Remove">×</span>
+        </li>`).join('') + `<li style="list-style:none;"><button onclick="addResp(${idx})" style="background:none;border:none;color:var(--beam);cursor:pointer;font-size:11px;font-family:inherit;padding:2px 0;">+ Add responsibility</button></li>`;
         const weeklyHtml = owner.weekly && owner.weekly.length > 0
             ? `<table class="team-metrics"><thead><tr><th>Metric</th><th>This Week</th><th>Last Week</th><th>Trend</th></tr></thead><tbody>${
                 owner.weekly.map(w => `<tr><td>${w.metric}</td><td>${w.this_week || '—'}</td><td>${w.last_week || '—'}</td><td>${w.trend || '—'}</td></tr>`).join('')
@@ -921,11 +944,38 @@
         const statusInfo = { pending: { icon: '☐', badge: 'PENDING', cls: 'status-pending', liCls: '' }, active: { icon: '▶', badge: 'ACTIVE', cls: 'status-active', liCls: '' }, alert: { icon: '⚠', badge: 'ALERT', cls: 'status-alert', liCls: 'urgent' }, done: { icon: '✓', badge: 'DONE', cls: 'status-active', liCls: 'done' } };
         const renderActionLi = (a, ai) => {
             const si = statusInfo[a.status] || statusInfo.pending;
-            return `<li class="${si.liCls}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span class="status-badge ${si.cls} action-clickable" onclick="toggleAction(${idx},${ai})" title="Click to change status: pending → active → alert → done">${si.badge}</span>
-                <span style="flex:1;cursor:text;min-width:200px;" onclick="event.stopPropagation();editAction(${idx},${ai})" title="Click to edit">${a.title}${a.blocker ? ` <span style="font-size:10px;color:var(--text-muted);">[blocked: ${a.blocker}]</span>` : ''}${a.root_cause ? ` <span style="font-size:10px;color:var(--beam);">${a.root_cause}</span>` : ''}</span>
-                ${a.support ? '<span class="dep-tag">'+a.support+'</span>' : ''}${a.owner ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.owner+'</span>' : ''}
-                <span class="action-delete" onclick="deleteAction(${idx},${ai})">×</span>
+            // Find which root cause this action belongs to
+            let rcLabel = a.root_cause || '';
+            if (!rcLabel) {
+                rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+                    if (sc.actions.includes(a)) rcLabel = rc.name + ' → ' + sc.name;
+                }));
+            }
+            return `<li class="${si.liCls}" style="display:flex;flex-direction:column;gap:4px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span class="status-badge ${si.cls} action-clickable" onclick="toggleAction(${idx},${ai})" title="Click to change status">${si.badge}</span>
+                    <span style="flex:1;cursor:pointer;min-width:200px;" onclick="event.stopPropagation();toggleActionDetail('action-detail-${idx}-${ai}')" title="Click to see details">${a.title}</span>
+                    ${a.support ? '<span class="dep-tag">'+a.support+'</span>' : ''}${a.owner ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.owner+'</span>' : ''}
+                </div>
+                ${rcLabel ? '<div style="font-size:10px;color:var(--beam);margin-left:60px;">'+rcLabel+'</div>' : ''}
+                ${a.due_date ? '<div style="font-size:10px;color:var(--text-muted);margin-left:60px;">'+(a.start_date?a.start_date+' → ':'')+a.due_date+(new Date(a.due_date)<new Date()&&a.status!=='done'?' <span style="color:#EF5350;">OVERDUE</span>':'')+'</div>' : ''}
+                ${a.blocker ? '<div style="font-size:10px;color:#EF5350;margin-left:60px;">Roadblock: '+a.blocker+'</div>' : ''}
+                <div id="action-detail-${idx}-${ai}" class="collapsed" style="margin-left:60px;margin-top:4px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);">
+                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">${a.title}</div>
+                    ${rcLabel ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Root Cause:</span> <span style="color:var(--beam);">'+rcLabel+'</span></div>' : ''}
+                    ${a.kpi ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">KPI:</span> '+a.kpi+'</div>' : ''}
+                    ${a.baseline !== null ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Baseline:</span> '+a.baseline+' → <span style="color:var(--text-muted);">Current:</span> '+(a.current||'—')+' → <span style="color:var(--text-muted);">Target:</span> '+(a.target||'TBD')+'</div>' : ''}
+                    ${a.start_date || a.due_date ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Dates:</span> '+(a.start_date||'—')+' → '+(a.due_date||'—')+(a.due_date && new Date(a.due_date)<new Date() && a.status!=='done'?' <span style="color:#EF5350;font-weight:600;">OVERDUE</span>':'')+'</div>' : ''}
+                    ${a.owner ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Owner:</span> '+a.owner+'</div>' : ''}
+                    ${a.support ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Support:</span> '+a.support+'</div>' : ''}
+                    ${a.blocker ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:#EF5350;">Roadblock:</span> '+a.blocker+'</div>' : ''}
+                    ${a.notes ? '<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text-muted);">Notes:</span> '+a.notes+'</div>' : ''}
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button onclick="event.stopPropagation();editAction(${idx},${ai})" style="padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;font-size:10px;font-family:inherit;cursor:pointer;">Edit</button>
+                        <button onclick="event.stopPropagation();promptRoadblock(${idx},${ai})" style="padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;font-size:10px;font-family:inherit;cursor:pointer;">Add Roadblock</button>
+                        <button onclick="event.stopPropagation();deleteAction(${idx},${ai})" style="padding:4px 12px;background:none;border:1px solid #EF5350;color:#EF5350;border-radius:4px;font-size:10px;font-family:inherit;cursor:pointer;">Delete</button>
+                    </div>
+                </div>
             </li>`;
         };
         const activeActions = owner.actions.map((a, ai) => ({ a, ai })).filter(x => x.a.status !== 'done');
@@ -952,6 +1002,10 @@
                     <select id="form-status-${idx}"><option value="pending">Pending</option><option value="active">Active</option><option value="alert">Alert</option></select>
                     <input type="text" id="form-baseline-${idx}" placeholder="Baseline" style="width:80px;">
                     <input type="text" id="form-target-${idx}" placeholder="Target" style="width:80px;">
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <div style="flex:1;"><label style="font-size:10px;color:var(--text-muted);">Start Date</label><input type="date" id="form-start-${idx}" style="width:100%;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;"></div>
+                    <div style="flex:1;"><label style="font-size:10px;color:var(--text-muted);">Due Date</label><input type="date" id="form-due-${idx}" style="width:100%;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;"></div>
                 </div>
                 <input type="text" id="form-support-${idx}" placeholder="Owner (who in production is responsible?)">
                 <input type="text" id="form-blocker-${idx}" placeholder="Blocker (optional)">
@@ -987,13 +1041,26 @@
 
     async function loadTeam() {
         document.getElementById('teamStatus').textContent = 'Loading...';
+        // Build owner cards from owners blob (for profile info) + root_causes (for actions)
         const data = await apiGet('owners');
         if (data) {
+            // Replace each owner's actions with those from root_causes filtered by owner/support name
+            data.forEach(owner => {
+                const allActions = [];
+                rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+                    sc.actions.forEach(a => {
+                        if ((a.owner||'').includes(owner.name) || (a.support||'').includes(owner.name)) {
+                            allActions.push(a);
+                        }
+                    });
+                }));
+                owner.actions = allActions;
+            });
             ownersData = data;
             renderTeamGrid();
-            document.getElementById('teamStatus').textContent = 'Live from API';
+            document.getElementById('teamStatus').textContent = 'Actions from root causes';
         } else {
-            document.getElementById('teamStatus').textContent = 'API unavailable — showing cached';
+            document.getElementById('teamStatus').textContent = 'API unavailable';
         }
     }
 
@@ -1003,14 +1070,30 @@
         const cur = statusCycle.indexOf(a.status);
         a.status = statusCycle[(cur + 1) % statusCycle.length];
         renderTeamGrid();
-        await apiPut('owners', ownersData);
+        // Save to root_causes since that's the source of truth
+        if (!isLocal) await apiPut('root_causes', rootCausesData);
     }
 
     async function deleteAction(ownerIdx, actionIdx) {
         if (!confirm('Delete this action?')) return;
-        ownersData[ownerIdx].actions.splice(actionIdx, 1);
+        const action = ownersData[ownerIdx].actions[actionIdx];
+        // Remove from rootCausesData (single source of truth)
+        let removed = false;
+        rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+            const idx = sc.actions.indexOf(action);
+            if (idx !== -1) { sc.actions.splice(idx, 1); removed = true; }
+        }));
+        // Rebuild owner's derived actions
+        const owner = ownersData[ownerIdx];
+        const allActions = [];
+        rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+            sc.actions.forEach(a => {
+                if ((a.owner||'').includes(owner.name) || (a.support||'').includes(owner.name)) allActions.push(a);
+            });
+        }));
+        owner.actions = allActions;
         renderTeamGrid();
-        await apiPut('owners', ownersData);
+        await apiPut('root_causes', rootCausesData);
     }
 
     // ===== FILE UPLOAD — Short PID Review =====
@@ -1427,14 +1510,34 @@
     function editAction(ownerIdx, actionIdx) {
         const a = ownersData[ownerIdx].actions[actionIdx];
         const form = document.getElementById(`form-${ownerIdx}`);
-        document.getElementById(`form-title-${ownerIdx}`).value = a.title;
-        document.getElementById(`form-status-${ownerIdx}`).value = a.status;
-        document.getElementById(`form-rc-${ownerIdx}`).value = a.root_cause || '';
-        if (document.getElementById(`form-support-${ownerIdx}`)) document.getElementById(`form-support-${ownerIdx}`).value = a.support || '';
+
+        // Find the root_cause sub_cause id for this action
+        let rcId = a.root_cause || '';
+        if (!rcId) {
+            rootCausesData.forEach(rc => (rc.sub_causes||[]).forEach(sc => {
+                if (sc.actions.includes(a)) rcId = sc.id;
+            }));
+        }
+
+        // Populate dropdown first, then set value
+        const rcSelect = document.getElementById(`form-rc-${ownerIdx}`);
+        populateRCDropdown(rcSelect);
+        rcSelect.value = rcId;
+
+        document.getElementById(`form-title-${ownerIdx}`).value = a.title || '';
+        document.getElementById(`form-status-${ownerIdx}`).value = a.status || 'pending';
+        if (document.getElementById(`form-kpi-${ownerIdx}`)) document.getElementById(`form-kpi-${ownerIdx}`).value = a.kpi || '';
+        if (document.getElementById(`form-baseline-${ownerIdx}`)) document.getElementById(`form-baseline-${ownerIdx}`).value = a.baseline !== null ? a.baseline : '';
+        if (document.getElementById(`form-target-${ownerIdx}`)) document.getElementById(`form-target-${ownerIdx}`).value = a.target !== null ? a.target : '';
+        if (document.getElementById(`form-start-${ownerIdx}`)) document.getElementById(`form-start-${ownerIdx}`).value = a.start_date || '';
+        if (document.getElementById(`form-due-${ownerIdx}`)) document.getElementById(`form-due-${ownerIdx}`).value = a.due_date || '';
+        if (document.getElementById(`form-support-${ownerIdx}`)) document.getElementById(`form-support-${ownerIdx}`).value = a.owner || a.support || '';
         document.getElementById(`form-blocker-${ownerIdx}`).value = a.blocker || '';
+
         form.classList.add('show');
         form.dataset.editIdx = actionIdx;
         document.getElementById(`form-title-${ownerIdx}`).focus();
+        setupAsanaToggle(ownerIdx);
     }
 
     async function saveAction(idx) {
@@ -1451,13 +1554,27 @@
         const blocker = document.getElementById(`form-blocker-${idx}`).value.trim();
         const form = document.getElementById(`form-${idx}`);
         const editIdx = form.dataset.editIdx;
-        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, support: support || '', blocker: blocker || '' };
-        if (editIdx !== undefined && editIdx !== '') {
-            ownersData[idx].actions[parseInt(editIdx)] = actionData;
-            delete form.dataset.editIdx;
-        } else {
-            ownersData[idx].actions.push(actionData);
-        }
+        const startDate = document.getElementById(`form-start-${idx}`)?.value || '';
+        const dueDate = document.getElementById(`form-due-${idx}`)?.value || '';
+        const ownerName = ownersData[idx]?.name || '';
+        const actionData = { title, status, root_cause: rc, kpi, baseline: baseline ? Number(baseline) : null, current: baseline ? Number(baseline) : null, target: target ? Number(target) : null, owner: support || ownerName, support: ownerName, blocker: blocker || '', start_date: startDate || null, due_date: dueDate || null };
+
+        // Save to root_causes under the correct sub-cause
+        let saved = false;
+        rootCausesData.forEach(rcData => (rcData.sub_causes||[]).forEach(sc => {
+            if (sc.id === rc) {
+                if (editIdx !== undefined && editIdx !== '') {
+                    // Find the action in root_causes that matches
+                    const origAction = ownersData[idx].actions[parseInt(editIdx)];
+                    const rcAction = sc.actions.find(a => a.title === origAction.title);
+                    if (rcAction) Object.assign(rcAction, actionData);
+                } else {
+                    sc.actions.push(actionData);
+                }
+                saved = true;
+            }
+        }));
+        if (editIdx !== undefined && editIdx !== '') delete form.dataset.editIdx;
 
         // Create in Asana if toggled
         const asanaToggle = document.getElementById(`form-asana-toggle-${idx}`);
@@ -1473,12 +1590,15 @@
             } catch(e) { console.log('Asana create failed:', e); }
         }
 
-        renderTeamGrid();
-        await apiPut('owners', ownersData);
+        // Refresh team (re-filter from root_causes) and save
+        loadTeam();
+        renderOverview();
+        renderActions();
+        if (!isLocal) await apiPut('root_causes', rootCausesData);
     }
 
-    // Load team on page load
-    loadTeam();
+    // Load team AFTER root_causes are loaded
+    // (moved call to after loadRootCauses)
 
     // Also load Pareto from API and update chart
     let paretoData = [];
@@ -1678,6 +1798,7 @@
             }
             renderOverview();
             renderActions();
+            loadTeam(); // load team after root_causes so actions filter correctly
         } catch(e) {
             document.getElementById('rootCauseCards').innerHTML = '<div style="color:#EF5350;padding:20px;">Error loading: ' + e.message + '</div>';
         }
@@ -1842,7 +1963,7 @@
       }
     }
 
-    function renderActionCard(a, sc) {
+    function renderActionCard(a, sc, rcIdx, subIdx, actIdx) {
         const si = { pending: {badge:'PENDING',cls:'status-pending'}, active: {badge:'ACTIVE',cls:'status-active'}, alert: {badge:'ALERT',cls:'status-alert'}, done: {badge:'DONE',cls:'status-active'} };
         const s = si[a.status] || si.pending;
         const kpiMatch = (sc.leading_indicators||[]).find(li => li.name === a.kpi);
@@ -1856,8 +1977,9 @@
             progressHtml = `<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px;"><span>Baseline: ${a.baseline}</span><span>Current: <strong style="color:${barColor};">${a.current}</strong></span><span>Target: ${a.target}</span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${progress}%;background:${barColor};border-radius:3px;"></div></div></div>`;
         }
         const linkHtml = a.link ? `<div style="margin-top:8px;"><a href="${a.link}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--beam);color:#fff;border-radius:4px;text-decoration:none;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">↗ ${a.link_label || 'Open Link'}</a></div>` : '';
+        const clickable = rcIdx !== undefined ? ` action-clickable" onclick="toggleRCAction(${rcIdx},${subIdx},${actIdx})" title="Click to change status` : '"';
         return `<div style="padding:12px;background:var(--surface2);border-radius:6px;margin-bottom:8px;${a.status==='done'?'opacity:0.6;':''}">
-            <div style="display:flex;align-items:center;gap:8px;"><span class="status-badge ${s.cls}">${s.badge}</span><span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span><span class="dep-tag">${a.owner}</span>${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}</div>
+            <div style="display:flex;align-items:center;gap:8px;"><span class="status-badge ${s.cls}${clickable}">${s.badge}</span><span style="flex:1;font-size:13px;${a.status==='done'?'text-decoration:line-through;':''}">${a.title}</span>${a.owner ? '<span class="dep-tag">'+a.owner+'</span>' : ''}${a.support ? '<span class="dep-tag" style="background:rgba(0,163,225,0.1);color:var(--beam);">'+a.support+'</span>' : ''}</div>
             ${a.kpi ? `<div style="margin-top:6px;font-size:11px;"><span style="color:var(--text-muted);">KPI:</span> <span style="color:${kpiColor};font-weight:500;">${a.kpi}</span></div>` : ''}
             ${progressHtml}
             ${linkHtml}
@@ -2035,7 +2157,10 @@
 
                 const mergedInline = getMergedActions(sc);
                 const doneInline = mergedInline.filter(a => a.status === 'done').length;
-                const actionsHtml = mergedInline.map(a => renderActionCard(a, sc)).join('');
+                const ownActionCount = (sc.actions || []).length;
+                const actionsHtml = mergedInline.map((a,ai) => ai < ownActionCount
+                    ? renderActionCard(a, sc, expandedMain, si, ai)
+                    : renderActionCard(a, sc)).join('');
 
                 detailHtml = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
                     ${indicatorsHtml ? `<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:8px;">Leading Indicators</div>${indicatorsHtml}` : ''}
@@ -2256,8 +2381,78 @@
         selectedRC = null;
     }
 
+    // ===== RESPONSIBILITIES =====
+    async function removeResp(ownerIdx, respIdx) {
+        if (!confirm('Remove this responsibility?')) return;
+        ownersData[ownerIdx].responsibilities.splice(respIdx, 1);
+        renderTeamGrid();
+        if (!isLocal) await apiPut('owners', ownersData);
+    }
+    async function editResp(ownerIdx, respIdx) {
+        const current = ownersData[ownerIdx].responsibilities[respIdx];
+        const text = prompt('Edit responsibility:', current);
+        if (text === null || !text.trim()) return;
+        ownersData[ownerIdx].responsibilities[respIdx] = text.trim();
+        renderTeamGrid();
+        if (!isLocal) await apiPut('owners', ownersData);
+    }
+    async function addResp(ownerIdx) {
+        const text = prompt('New responsibility:');
+        if (!text || !text.trim()) return;
+        ownersData[ownerIdx].responsibilities.push(text.trim());
+        renderTeamGrid();
+        if (!isLocal) await apiPut('owners', ownersData);
+    }
+
+    // ===== ACTION DETAIL & ROADBLOCK =====
+    function toggleActionDetail(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('collapsed');
+    }
+
+    async function promptRoadblock(ownerIdx, actionIdx) {
+        const a = ownersData[ownerIdx].actions[actionIdx];
+        const roadblock = prompt('Describe the roadblock:', a.blocker || '');
+        if (roadblock === null) return; // cancelled
+        a.blocker = roadblock;
+        renderTeamGrid();
+        if (!isLocal) await apiPut('root_causes', rootCausesData);
+    }
+
+    // ===== ROOT CAUSE ACTION TOGGLE =====
+    const rcStatusCycle = ['pending', 'active', 'alert', 'done'];
+    async function toggleRCAction(rcIdx, subIdx, actIdx) {
+        const a = rootCausesData[rcIdx].sub_causes[subIdx].actions[actIdx];
+        const cur = rcStatusCycle.indexOf(a.status);
+        a.status = rcStatusCycle[(cur + 1) % rcStatusCycle.length];
+        if (!isLocal) await apiPut('root_causes', rootCausesData);
+        // Re-render the current view
+        if (expandedSub !== null) renderOverviewExpand();
+        renderOverview();
+        renderActions();
+    }
+
+    // ===== ASANA COMMENTS =====
+    async function postAsanaComment(taskGid) {
+        const author = document.getElementById('comment-author-' + taskGid).value;
+        const text = document.getElementById('comment-text-' + taskGid).value.trim();
+        if (!text) return;
+        document.getElementById('comment-text-' + taskGid).value = 'Posting...';
+        document.getElementById('comment-text-' + taskGid).disabled = true;
+        try {
+            await fetch('/api/asana-comment', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ task_gid: taskGid, text, author_name: author })
+            });
+            loadBOMReviews(); // refresh to show new comment
+        } catch(e) {
+            document.getElementById('comment-text-' + taskGid).value = 'Error posting';
+        }
+    }
+
     // ===== 5 WHYS ROOT CAUSE ANALYSIS =====
     let fiveWhysData = { problem: '', whys: [] };
+    function closeFiveWhys() { document.getElementById('fiveWhysPanel').style.display = 'none'; }
 
     async function startFiveWhys() {
         const problem = document.getElementById('fiveWhysProblem').value.trim();
@@ -2377,14 +2572,36 @@
                 const isDone = t.completed;
                 const statusCls = isDone ? 'status-active' : (t.due_on && new Date(t.due_on) < new Date() ? 'status-alert' : 'status-pending');
                 const statusLabel = isDone ? 'DONE' : (t.due_on && new Date(t.due_on) < new Date() ? 'OVERDUE' : 'OPEN');
-                return `<div class="card" style="margin-bottom:8px;${isDone ? 'opacity:0.6;' : ''}border-left:3px solid ${isDone ? '#4CAF50' : '#7E57C2'};">
+                const commentsHtml = (t.comments || []).length ? t.comments.map(c => {
+                    const d = new Date(c.date);
+                    const dateStr = d.toLocaleDateString('en-US', {month:'short',day:'numeric'});
+                    return `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
+                        <span style="font-weight:600;color:var(--beam);">${c.author}</span>
+                        <span style="color:var(--text-muted);margin-left:6px;">${dateStr}</span>
+                        <div style="color:var(--text-secondary);margin-top:2px;">${c.text}</div>
+                    </div>`;
+                }).join('') : '<div style="font-size:11px;color:var(--text-muted);padding:4px 0;">No comments yet</div>';
+
+                return `<div class="card" style="margin-bottom:12px;${isDone ? 'opacity:0.6;' : ''}border-left:3px solid ${isDone ? '#4CAF50' : '#7E57C2'};">
                     <div style="display:flex;align-items:center;gap:8px;">
                         <span class="status-badge ${statusCls}">${statusLabel}</span>
                         <span style="flex:1;font-size:13px;${isDone ? 'text-decoration:line-through;' : ''}">${t.name}</span>
                         ${t.assignee ? '<span class="dep-tag">' + t.assignee.name + '</span>' : ''}
                         ${t.due_on ? '<span style="font-size:11px;color:var(--text-muted);">Due: ' + t.due_on + '</span>' : ''}
+                        ${t.permalink_url ? '<a href="' + t.permalink_url + '" target="_blank" style="font-size:10px;color:var(--beam);text-decoration:none;font-weight:600;">Open in Asana ↗</a>' : ''}
                     </div>
-                    ${t.notes ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);">' + t.notes.substring(0,150) + (t.notes.length > 150 ? '...' : '') + '</div>' : ''}
+                    ${t.notes ? '<div style="margin-top:6px;font-size:12px;color:var(--text-muted);">' + t.notes.substring(0,200) + (t.notes.length > 200 ? '...' : '') + '</div>' : ''}
+                    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
+                        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px;">Comments (${(t.comments||[]).length})</div>
+                        ${commentsHtml}
+                        <div style="display:flex;gap:6px;margin-top:8px;">
+                            <select id="comment-author-${t.gid}" style="padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;font-family:inherit;">
+                                <option>Miguel</option><option>Rigo</option><option>Stephanie</option><option>Alex</option><option>Carlos</option><option>Lidia</option><option>Alberto</option><option>Jimmy</option>
+                            </select>
+                            <input type="text" id="comment-text-${t.gid}" placeholder="Add comment..." style="flex:1;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;" onkeydown="if(event.key==='Enter')postAsanaComment('${t.gid}')">
+                            <button onclick="postAsanaComment('${t.gid}')" style="padding:6px 12px;background:var(--beam);border:none;color:white;border-radius:4px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;">Post</button>
+                        </div>
+                    </div>
                 </div>`;
             }).join('');
         } catch(e) {
